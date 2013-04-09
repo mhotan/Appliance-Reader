@@ -230,6 +230,8 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	}
 	
 	/**
+	 * Returns a unique name for a appliance that does not have a set 
+	 * name
 	 * @return unique name
 	 */
 	private String createDefaultName(){
