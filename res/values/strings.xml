@@ -2,7 +2,8 @@
 <resources>
 
     <string name="app_name">Appliance Reader</string>
-    <string name="action_settings">Settings</string>
+    <string name="menu_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-
+    <string name="picture_chooser_descriptor">Choose a picture from Gallery</string>
+    <string name="picture_taker_descriptor">Take a Picture</string>
 </resources>

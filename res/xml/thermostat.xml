@@ -1,0 +1,37 @@
+<annotation>
+<filename>reference.jpg</filename>
+<folder>users/mhotan//thermometer</folder>
+<source>
+<submittedBy>Michael Hotan</submittedBy>
+</source>
+<imagesize>
+<nrows>2592</nrows>
+<ncols>1944</ncols>
+</imagesize>
+<object>
+<name>main_display</name>
+<deleted>0</deleted>
+<verified>0</verified>
+<date>24-Feb-2013 18:54:36</date>
+<id>0</id>
+<polygon>
+<username/>
+<pt>
+<x>420</x>
+<y>843</y>
+</pt>
+<pt>
+<x>1645</x>
+<y>836</y>
+</pt>
+<pt>
+<x>1659</x>
+<y>1735</y>
+</pt>
+<pt>
+<x>403</x>
+<y>1742</y>
+</pt>
+</polygon>
+</object>
+</annotation>
