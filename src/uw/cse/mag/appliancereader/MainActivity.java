@@ -52,10 +52,18 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+/**
+ * Initial activity for Appliance Reader application
+ * 
+ * Activity Objective: Provide user initial ability to start interpretting a s  
+ * 
+ * @author mhotan
+ */
 public class MainActivity extends Activity implements ComputerVisionCallback,
 CvCameraViewListener, FeatureDetectionListener, WarpedPointListener, 
 OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
+	// Log Tag
 	private static final String TAG = MainActivity.class.getSimpleName();
 
 	// String representations of storage
@@ -64,6 +72,10 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 	private static final int REQUESTCODE_REFERENCE_IMG = 1;
 
+	
+	/*
+	 * DEBUG: The following 
+	 */
 	private static final DISPLAY_OPTION[] mDisplayOptions = {DISPLAY_OPTION.DONT_DISPLAY, 
 		DISPLAY_OPTION.FEATURES, DISPLAY_OPTION.BOX, DISPLAY_OPTION.WARP_IMG };
 	private enum DISPLAY_OPTION {FEATURES("Display Features"), 

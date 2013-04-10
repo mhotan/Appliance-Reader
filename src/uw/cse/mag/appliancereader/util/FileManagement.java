@@ -17,14 +17,16 @@ import android.util.Log;
  * As of right now the directory layout of a particular appliance includes
  * <b>
  * <b>For an Appliance "A" The layout class
+  	<b>
   	<b>-ApplianceReader
   	<b>--Appliances
 	<b>---A
+	<b>----TODO: Add meta data including the ID 
 	<b>----reference image directory
 	<b>----other images (optional)
 	<b>----XML file directory (Thing that describes all the features)
  * <b>
- * Multithread safe class for file management Read and Write access
+ * Thread safe class for file management Read and Write access
  * <b>This class is specific for Appliance Reader
  * storage
  * @author mhotan
@@ -86,8 +88,8 @@ public class FileManagement {
 	
 	/**
 	 * Quick helper method for checking if a name is valid
-	 * @param name
-	 * @return
+	 * @param name Name of appliance
+	 * @return 
 	 */
 	public synchronized boolean isValidName(String name){
 		return privIsValidName(name);
