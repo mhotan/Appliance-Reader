@@ -17,10 +17,10 @@ import android.util.Log;
  * 
  * @author Michael Hotan
  */
-public class AppReaderSQLiteHelper extends SQLiteOpenHelper {
+public class UserAppliancesSQLiteHelper extends SQLiteOpenHelper {
 
 	// Log purposes
-	private static final String TAG = AppReaderSQLiteHelper.class.getSimpleName();
+	private static final String TAG = UserAppliancesSQLiteHelper.class.getSimpleName();
 	
 	/**
 	 * Specific Name of database
@@ -54,7 +54,7 @@ public class AppReaderSQLiteHelper extends SQLiteOpenHelper {
 	 * Constructs lowest level interface for database
 	 * @param context Owning context
 	 */
-	public AppReaderSQLiteHelper(Context context){
+	public UserAppliancesSQLiteHelper(Context context){
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 	
