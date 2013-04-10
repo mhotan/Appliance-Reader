@@ -2,7 +2,6 @@ package uw.cse.mag.appliancereader.db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 /**
@@ -17,58 +16,47 @@ import android.util.Log;
  * 
  * @author Michael Hotan
  */
-public class UserAppliancesSQLiteHelper extends SQLiteOpenHelper {
+public class UserAppliancesSQLiteHelper extends ApplianceSQLiteHelper {
 
 	// Log purposes
 	private static final String TAG = UserAppliancesSQLiteHelper.class.getSimpleName();
 	
-	/**
-	 * Specific Name of database
-	 * And version number
-	 */
-	private static final String DATABASE_NAME = "userappliances.db";
-	private static final int DATABASE_VERSION = 1;
-	
-	/**
-	 * Name of table the that stores user appliances
-	 * ID values that increment automatically  
-	 */
-	public static final String TABLE_USER_APPLIANCES = "userappliances";
-	// Table Columns
-	public static final String COLUMN_ID = "_id";
-	public static final String COLUMN_NICKNAME = "name";
-	public static final String COLUMN_MAKE = "make";
-	public static final String COLUMN_MODEL = "model";
-	public static final String COLUMN_DIRECTORY = "directory";
-	
+//	/**
+//	 * Name of table the that stores user appliances
+//	 * ID values that increment automatically  
+//	 */
+//	public static final String TABLE_USER_APPLIANCES = "userappliances";
+//	
 	// Database creation sql statement
-	private static final String DATABASE_CREATE = "create table " + TABLE_USER_APPLIANCES + "(" 
-	+ COLUMN_ID + " integer primary key autoincrement, " 
-			+ COLUMN_NICKNAME + " text not null,"
-		      + COLUMN_MAKE +" text,"
-		      + COLUMN_MODEL +" text,"
-		      + COLUMN_DIRECTORY + " text not null"
-			+ ");";
+
+//	private final String DATABASE_CREATE = "create table " + TABLE_USER_APPLIANCES + "(" 
+//	+ COLUMN_ID + " integer primary key autoincrement, " 
+//			+ COLUMN_NICKNAME + " text not null,"
+//		      + COLUMN_MAKE +" text,"
+//		      + COLUMN_MODEL +" text,"
+//		      + COLUMN_DIRECTORY + " text not null"
+//			+ ");";
 	
 	/**
 	 * Constructs lowest level interface for database
 	 * @param context Owning context
 	 */
 	public UserAppliancesSQLiteHelper(Context context){
-		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		super(context);
+		TABLE_NAME = "userappliances";
 	}
 	
 	@Override
 	public void onCreate(SQLiteDatabase database) {
 		Log.d(TAG, "Creating a new database");
-		database.execSQL(DATABASE_CREATE);
+		database.execSQL(getSQLDataBaseCreate());
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
 	            + newVersion + ", which will destroy all old data");
-		db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_APPLIANCES);
+		db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
 		onCreate(db);
 	}
 

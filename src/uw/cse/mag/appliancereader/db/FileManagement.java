@@ -1,4 +1,4 @@
-package uw.cse.mag.appliancereader.util;
+package uw.cse.mag.appliancereader.db;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uw.cse.mag.appliancereader.datatype.XMLTestImageSet;
+import uw.cse.mag.appliancereader.util.ImageIO;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.util.Log;
