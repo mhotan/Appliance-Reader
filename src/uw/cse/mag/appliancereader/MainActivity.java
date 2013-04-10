@@ -26,8 +26,8 @@ import uw.cse.mag.appliancereader.cv.async.AsyncFeatureDrawer.OnFeaturesDrawnLis
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper;
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper.ImageWarpListener;
 import uw.cse.mag.appliancereader.cv.async.ImageInformation;
-import uw.cse.mag.appliancereader.dataset.ApplianceImageSet;
-import uw.cse.mag.appliancereader.dataset.XMLTestImageSet;
+import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
+import uw.cse.mag.appliancereader.datatype.XMLTestImageSet;
 import uw.cse.mag.appliancereader.imgproc.ImageConversion;
 import uw.cse.mag.appliancereader.imgproc.Size;
 import uw.cse.mag.appliancereader.util.FileManagement;
@@ -120,7 +120,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 	private CameraBridgeViewBase mOpenCvCameraView;
 
-	private ApplianceImageSet mRefImageSet;
+	private ApplianceFeatures mRefImageSet;
 
 	private FileManagement fileManager;
 

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import uw.cse.mag.appliancereader.dataset.XMLTestImageSet;
+import uw.cse.mag.appliancereader.datatype.XMLTestImageSet;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.util.Log;

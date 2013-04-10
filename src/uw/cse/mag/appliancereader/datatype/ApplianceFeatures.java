@@ -1,25 +1,24 @@
-package uw.cse.mag.appliancereader.dataset;
+package uw.cse.mag.appliancereader.datatype;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.opencv.core.Core;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 
 
 /**
- * Container abstract class to represent a set of images that correspond to a complete Appliance
- * <b>It must contain a reference image that must be properly annotated</b> 
- * <b>It can contain a set of other images that are perspective warps of reference image </b>
+ * Abstract class that describes the features of a single application
+ * <br>A feature is descrtibed to have
+ * <br>-- Reference name of feature
+ * <br>-- List of points describing the bounding box of the feature
  * 
  * @author mhotan
  */
-public abstract class ApplianceImageSet implements Serializable {
+public abstract class ApplianceFeatures {
 
 	/**
 	 * Hidden data abstraction for containing data
@@ -130,17 +129,6 @@ public abstract class ApplianceImageSet implements Serializable {
 		Point maxPt = new Point(maxX, maxY);
 		return new Rect(minPt, maxPt);
 	}
-	
-//	/**
-//	 * 
-//	 * @return reference image for this appliance
-//	 */
-//	public abstract Bitmap getReferenceImage();
-//	
-//	/**
-//	 * @return all non reference images
-//	 */
-//	public abstract Bitmap[] getNonReferenceImages();
 	
 	
 }

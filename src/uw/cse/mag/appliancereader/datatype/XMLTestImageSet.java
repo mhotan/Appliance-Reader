@@ -1,4 +1,4 @@
-package uw.cse.mag.appliancereader.dataset;
+package uw.cse.mag.appliancereader.datatype;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -13,7 +13,7 @@ import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.util.Log;
 
-public class XMLTestImageSet extends ApplianceImageSet {
+public class XMLTestImageSet extends ApplianceFeatures {
 
 	/**
 	 * 
