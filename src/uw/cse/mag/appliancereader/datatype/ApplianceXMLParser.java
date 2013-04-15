@@ -83,7 +83,16 @@ public class ApplianceXMLParser {
 		return features;
 	}
 
-
+	
+	public static final String FEATURE_TAG = "object";
+	public static final String FEATURE_NAME_TAG = "name";
+	public static final String FEATURE_PT_TAG = "pt";
+	/**
+	 * Given an XML Pull Parser be able to parse any 
+	 * @param features
+	 * @param xpp
+	 * @throws XmlPullParserException
+	 */
 	private static void parse(ApplianceFeatures features, XmlPullParser xpp) 
 			throws XmlPullParserException {
 		assert(xpp != null);
@@ -104,7 +113,7 @@ public class ApplianceXMLParser {
 
 					// Iterate through all the tags 
 					// find all the objects
-					if (object.equals("object")){
+					if (object.equals(FEATURE_TAG)){
 						int objectType = xpp.next();
 						String tagName = xpp.getName(); 
 
@@ -118,20 +127,23 @@ public class ApplianceXMLParser {
 
 							stringBuffer.append("\nObject Start: " + xpp.getName());
 
-							// If the current tag is the name object
+							// If the current tag is the NAME object
 							if (objectType == XmlPullParser.START_TAG &&
-									tagName.equals("name")){
+									tagName.equals(FEATURE_NAME_TAG)){
 								if (xpp.next() == XmlPullParser.TEXT){
 									objectName = xpp.getText().trim();
 								}
 								else objectName = null;
 							}
-
 							stringBuffer.append("\nObject Name: " + xpp.getName());
 
+							// TODO Add additional Fields here... 
+							
+							
+							
 							// For every point within the object add to list
 							if (objectType == XmlPullParser.START_TAG &&
-									tagName != null && tagName.equals("pt")){
+									tagName != null && tagName.equals(FEATURE_PT_TAG)){
 
 								int ptType = xpp.next();
 								String ptTagName = xpp.getName(); 
@@ -141,7 +153,7 @@ public class ApplianceXMLParser {
 								p.x = -1;
 								p.y = -1;
 								while (!(ptType == XmlPullParser.END_TAG &&
-										ptTagName != null && ptTagName.equals("pt"))){
+										ptTagName != null && ptTagName.equals(FEATURE_PT_TAG))){
 
 									// If is X coordinate
 									if (ptType == XmlPullParser.START_TAG &&
@@ -172,7 +184,7 @@ public class ApplianceXMLParser {
 									// check if point is valid
 									// Create a new one
 									if (ptType == XmlPullParser.END_TAG &&
-											ptTagName != null && ptTagName.equals("pt")){
+											ptTagName != null && ptTagName.equals(FEATURE_PT_TAG)){
 
 										if (p.x != -1 && p.y != -1){
 											// valid point so add to list

@@ -48,7 +48,7 @@ public abstract class ApplianceFeatures {
 			hiddenPoints.add(p.clone());
 		}
 		mFeatures.put(featureName, hiddenPoints);
-	}
+	} 
 	 
 	/**
 	 * Each image set contains a known set of features that are distinguishable on the appliance <b>

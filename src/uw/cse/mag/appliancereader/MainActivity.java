@@ -28,9 +28,8 @@ import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper.ImageWarpListener;
 import uw.cse.mag.appliancereader.cv.async.ImageInformation;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
 import uw.cse.mag.appliancereader.datatype.XMLTestImageSet;
-import uw.cse.mag.appliancereader.db.FileManagement;
-import uw.cse.mag.appliancereader.db.FileManagement.ApplianceNotExistException;
-import uw.cse.mag.appliancereader.db.FileManagement.NameFormatException;
+import uw.cse.mag.appliancereader.db.FileManager;
+import uw.cse.mag.appliancereader.db.FileManager.ApplianceNotExistException;
 import uw.cse.mag.appliancereader.imgproc.ImageConversion;
 import uw.cse.mag.appliancereader.imgproc.Size;
 import uw.cse.mag.appliancereader.util.ImageIO;
@@ -122,7 +121,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 	private ApplianceFeatures mRefImageSet;
 
-	private FileManagement fileManager;
+	private FileManager fileManager;
 
 	private String mCurrentAppliance;
 
@@ -155,7 +154,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		mOpenCvCameraView.setCvCameraViewListener(this);
 
 		// Establish directories for saving image files
-		fileManager = FileManagement.getInstance();
+		fileManager = FileManager.getInstance();
 
 		// Load our default image
 		// TODO Make this more robust possible in an exterior class/interface

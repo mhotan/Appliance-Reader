@@ -44,6 +44,8 @@ abstract class ApplianceSQLiteHelper extends SQLiteOpenHelper {
 	}
 
 	/**
+	 * This method was made to handle subclass request to create different tables
+	 * in the same database.  
 	 * Generates the Data Base creaet sql command in String form
 	 * @return
 	 */
@@ -55,6 +57,10 @@ abstract class ApplianceSQLiteHelper extends SQLiteOpenHelper {
 			      + COLUMN_MODEL +" text,"
 			      + COLUMN_DIRECTORY + " text not null"
 				+ ");"; 
+	}
+	
+	public String getTableName(){
+		return TABLE_NAME;
 	}
 	
 	@Override

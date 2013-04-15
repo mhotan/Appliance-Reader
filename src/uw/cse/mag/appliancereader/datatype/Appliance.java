@@ -63,6 +63,24 @@ public class Appliance {
 	 * Getters
 	 * */
 	
+	public long getID(){
+		return mId;
+	}
+
+	public String getNickname(){
+		return mNickName;
+	}
 	
+	public String getMake(){
+		return mMake;
+	}
+	
+	public String getModel(){
+		return mModel;
+	}
+	
+	public String getDirectoryPath(){
+		return mDirectory;
+	}
 }
 
