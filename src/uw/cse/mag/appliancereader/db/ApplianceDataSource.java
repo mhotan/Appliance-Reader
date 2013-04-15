@@ -30,6 +30,7 @@ public class ApplianceDataSource {
 			ApplianceSQLiteHelper.COLUMN_NICKNAME,
 			ApplianceSQLiteHelper.COLUMN_MAKE,
 			ApplianceSQLiteHelper.COLUMN_MODEL,
+			ApplianceSQLiteHelper.COLUMN_TYPE,
 			ApplianceSQLiteHelper.COLUMN_DIRECTORY
 	};
 
@@ -131,6 +132,13 @@ public class ApplianceDataSource {
 		c.close();
 		return appliances;
 	}
+	
+	public boolean hasAppliances() {
+		Cursor mCursor = mDB.rawQuery("SELECT * FROM " + mSQLHelper.getTableName(), null);
+		if (mCursor.moveToFirst())
+			return true;
+		return false;
+	}
 
 	/**
 	 * 
@@ -142,6 +150,7 @@ public class ApplianceDataSource {
 		values.put(ApplianceSQLiteHelper.COLUMN_NICKNAME, a.getNickname());
 		values.put(ApplianceSQLiteHelper.COLUMN_MAKE, a.getMake());
 		values.put(ApplianceSQLiteHelper.COLUMN_MODEL, a.getModel());
+		values.put(ApplianceSQLiteHelper.COLUMN_TYPE, a.getType());
 		values.put(ApplianceSQLiteHelper.COLUMN_DIRECTORY, a.getDirectoryPath());
 		return values;
 	}

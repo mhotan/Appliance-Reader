@@ -27,7 +27,6 @@ import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper;
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper.ImageWarpListener;
 import uw.cse.mag.appliancereader.cv.async.ImageInformation;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
-import uw.cse.mag.appliancereader.datatype.XMLTestImageSet;
 import uw.cse.mag.appliancereader.db.FileManager;
 import uw.cse.mag.appliancereader.db.FileManager.ApplianceNotExistException;
 import uw.cse.mag.appliancereader.imgproc.ImageConversion;

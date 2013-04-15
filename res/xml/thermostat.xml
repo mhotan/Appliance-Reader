@@ -1,37 +1,288 @@
 <annotation>
-<filename>reference.jpg</filename>
-<folder>users/mhotan//thermometer</folder>
-<source>
-<submittedBy>Michael Hotan</submittedBy>
-</source>
-<imagesize>
-<nrows>2592</nrows>
-<ncols>1944</ncols>
-</imagesize>
-<object>
-<name>main_display</name>
-<deleted>0</deleted>
-<verified>0</verified>
-<date>24-Feb-2013 18:54:36</date>
-<id>0</id>
-<polygon>
-<username/>
-<pt>
-<x>420</x>
-<y>843</y>
-</pt>
-<pt>
-<x>1645</x>
-<y>836</y>
-</pt>
-<pt>
-<x>1659</x>
-<y>1735</y>
-</pt>
-<pt>
-<x>403</x>
-<y>1742</y>
-</pt>
-</polygon>
-</object>
+
+    <filename>
+reference.jpg
+    </filename>
+
+    <folder>
+users/mhotan//thermometer
+    </folder>
+
+    <source>
+        <submittedBy>
+Michael Hotan
+        </submittedBy>
+    </source>
+
+    <imagesize>
+        <nrows>
+2592
+        </nrows>
+
+        <ncols>
+1944
+        </ncols>
+    </imagesize>
+
+    <object>
+        <name>
+main_display
+        </name>
+
+        <deleted>
+0
+        </deleted>
+
+        <verified>
+0
+        </verified>
+
+        <date>
+24-Feb-2013 18:54:36
+        </date>
+
+        <id>
+0
+        </id>
+
+        <polygon>
+            <username />
+
+            <pt>
+                <x>
+420
+                </x>
+
+                <y>
+843
+                </y>
+            </pt>
+            <pt>
+                <x>
+1645
+                </x>
+
+                <y>
+836
+                </y>
+            </pt>
+            <pt>
+                <x>
+1659
+                </x>
+
+                <y>
+1735
+                </y>
+            </pt>
+            <pt>
+                <x>
+403
+                </x>
+
+                <y>
+1742
+                </y>
+            </pt>
+        </polygon>
+    </object>
+    <object>
+        <name>
+Battery Notifier
+        </name>
+
+        <deleted>
+0
+        </deleted>
+
+        <verified>
+0
+        </verified>
+
+        <date>
+15-Apr-2013 07:55:11
+        </date>
+
+        <id>
+1
+        </id>
+
+        <polygon>
+            <username>
+            </username>
+
+            <pt>
+                <x>
+530
+                </x>
+
+                <y>
+1239
+                </y>
+            </pt>
+            <pt>
+                <x>
+644
+                </x>
+
+                <y>
+1239
+                </y>
+            </pt>
+            <pt>
+                <x>
+632
+                </x>
+
+                <y>
+1380
+                </y>
+            </pt>
+            <pt>
+                <x>
+535
+                </x>
+
+                <y>
+1380
+                </y>
+            </pt>
+        </polygon>
+    </object>
+    <object>
+        <name>
+Percentage
+        </name>
+
+        <deleted>
+0
+        </deleted>
+
+        <verified>
+0
+        </verified>
+
+        <date>
+15-Apr-2013 07:55:50
+        </date>
+
+        <id>
+2
+        </id>
+
+        <polygon>
+            <username>
+            </username>
+
+            <pt>
+                <x>
+1191
+                </x>
+
+                <y>
+1205
+                </y>
+            </pt>
+            <pt>
+                <x>
+1310
+                </x>
+
+                <y>
+1200
+                </y>
+            </pt>
+            <pt>
+                <x>
+1312
+                </x>
+
+                <y>
+1380
+                </y>
+            </pt>
+            <pt>
+                <x>
+1186
+                </x>
+
+                <y>
+1378
+                </y>
+            </pt>
+            <pt>
+                <x>
+1183
+                </x>
+
+                <y>
+1222
+                </y>
+            </pt>
+        </polygon>
+    </object>
+    <object>
+        <name>
+Tens place Humidity Percentage
+        </name>
+
+        <deleted>
+0
+        </deleted>
+
+        <verified>
+0
+        </verified>
+
+        <date>
+15-Apr-2013 07:56:52
+        </date>
+
+        <id>
+3
+        </id>
+
+        <polygon>
+            <username>
+            </username>
+
+            <pt>
+                <x>
+877
+                </x>
+
+                <y>
+1059
+                </y>
+            </pt>
+            <pt>
+                <x>
+1028
+                </x>
+
+                <y>
+1052
+                </y>
+            </pt>
+            <pt>
+                <x>
+1006
+                </x>
+
+                <y>
+1378
+                </y>
+            </pt>
+            <pt>
+                <x>
+855
+                </x>
+
+                <y>
+1380
+                </y>
+            </pt>
+        </polygon>
+    </object>
+
 </annotation>

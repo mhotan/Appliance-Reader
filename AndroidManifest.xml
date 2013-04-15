@@ -26,8 +26,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="ApplianceSelectionActivity"></activity>
         <activity android:name=".camera.ExternalApplication"></activity>
+        <activity android:name="UserApplianceSelectionActivity"></activity>
     </application>
 
 </manifest>

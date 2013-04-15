@@ -17,9 +17,9 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class ApplianceSelectionActivity extends ListActivity {
+public class UserApplianceSelectionActivity extends ListActivity {
 
-	private static final Logger log = Logger.getLogger(ApplianceSelectionActivity.class.getSimpleName()); 
+	private static final Logger log = Logger.getLogger(UserApplianceSelectionActivity.class.getSimpleName()); 
 
 	private ApplianceDataSource datasource;
 

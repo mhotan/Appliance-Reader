@@ -1,5 +1,6 @@
 package uw.cse.mag.appliancereader.datatype;
 
+import uw.cse.mag.appliancereader.util.Util;
 import android.os.Bundle;
 
 /**
@@ -36,10 +37,14 @@ public class Appliance {
 	 */
 	private String mModel;
 	
+	private String mType;
+	
 	/**
 	 * Directory where all the files are stored
 	 */
 	private String mDirectory;
+	
+	
 	
 	/*
 	 * Setters
@@ -59,6 +64,10 @@ public class Appliance {
 	
 	public void setModel(String model){
 		this.mModel = model;
+	}
+	
+	public void setType(String type) {
+		this.mType = type;
 	}
 	
 	public void setDirectoryPath(String directoryPath){
@@ -85,6 +94,10 @@ public class Appliance {
 		return mModel;
 	}
 	
+	public String getType(){
+		return mType;
+	}
+	
 	public String getDirectoryPath(){
 		return mDirectory;
 	}
@@ -92,6 +105,12 @@ public class Appliance {
 	public String toString(){
 		if (mNickName != null)
 			return mNickName;
+		if (mDirectory != null) {
+			// Strip away .../something.../<name>.xml
+			// to <name>
+			return Util.stripPathAndExtension(mDirectory);
+		}
+		
 		String s = "";
 		if (mMake != null)
 			s += "Make: " + mMake;
@@ -101,13 +120,16 @@ public class Appliance {
 			s += "Model: " + mModel;
 		if (s.length() != 0)
 			return s;
-		return "Unknown Appliance: " + mId;
+		if (mType != null)
+			return "Unknown " + mType;
+		return "Unknown Appliance " + mId;
 	}
 	
 	private static final String BUNDLE_ID = "APP_BUN_ID";
 	private static final String BUNDLE_NICKNAME = "APP_BUN_NICKNAME";
 	private static final String BUNDLE_MAKE = "APP_BUN_MAKE";
 	private static final String BUNDLE_MODEL = "APP_BUN_MODEL";
+	private static final String BUNDLE_TYPE = "APP_BUN_TYPE";
 	private static final String BUNDLE_DIR = "APP_BUN_DIRECTORY";
 	
 	public Bundle toBundle(){
@@ -116,6 +138,7 @@ public class Appliance {
 		b.putString(BUNDLE_NICKNAME, mNickName);
 		b.putString(BUNDLE_MAKE, mMake);
 		b.putString(BUNDLE_MODEL, mModel);
+		b.putString(BUNDLE_TYPE, mType);
 		b.putString(BUNDLE_DIR, mDirectory);
 		return b;
 	}
@@ -133,6 +156,7 @@ public class Appliance {
 		a.setNickName(b.getString(BUNDLE_NICKNAME));
 		a.setMake(b.getString(BUNDLE_MAKE));
 		a.setModel(b.getString(BUNDLE_MODEL));
+		a.setType(b.getString(BUNDLE_TYPE));
 		a.setDirectoryPath(b.getString(BUNDLE_DIR));
 		return a;
 	}

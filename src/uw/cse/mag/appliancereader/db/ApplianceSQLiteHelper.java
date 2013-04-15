@@ -33,6 +33,7 @@ abstract class ApplianceSQLiteHelper extends SQLiteOpenHelper {
 	public static final String COLUMN_NICKNAME = "name";
 	public static final String COLUMN_MAKE = "make";
 	public static final String COLUMN_MODEL = "model";
+	public static final String COLUMN_TYPE = "type";
 	public static final String COLUMN_DIRECTORY = "directory";
 	
 	/**
@@ -55,6 +56,7 @@ abstract class ApplianceSQLiteHelper extends SQLiteOpenHelper {
 				+ COLUMN_NICKNAME + " text not null,"
 			      + COLUMN_MAKE +" text,"
 			      + COLUMN_MODEL +" text,"
+			      + COLUMN_TYPE +" text,"
 			      + COLUMN_DIRECTORY + " text not null"
 				+ ");"; 
 	}
