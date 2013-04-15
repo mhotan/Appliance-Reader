@@ -44,7 +44,9 @@ public class Appliance {
 	 */
 	private String mDirectory;
 	
-	
+	public Appliance(){
+		mId = -1;
+	}
 	
 	/*
 	 * Setters

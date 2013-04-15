@@ -33,9 +33,9 @@ int id camera_java_surface_view 0x7f050004
 int id choose_picture_button 0x7f050009
 int id display_option_spinner 0x7f050003
 int id front 0x7f050002
-int id imageButton1 0x7f050006
 int id menu_settings 0x7f05000a
 int id more_appliance_button 0x7f050005
+int id speak_button 0x7f050006
 int id take_picture_button 0x7f050008
 int layout activity_main 0x7f030000
 int layout appliance_list_layout 0x7f030001
@@ -48,6 +48,7 @@ int string more_appliance_btn 0x7f070005
 int string picture_chooser_descriptor 0x7f070003
 int string picture_taker_descriptor 0x7f070004
 int string speak_content_desc 0x7f070006
+int string str_download_appliances 0x7f070007
 int style AppBaseTheme 0x7f080000
 int style AppTheme 0x7f080001
 int[] styleable CameraBridgeViewBase { 0x7f010000, 0x7f010001 }

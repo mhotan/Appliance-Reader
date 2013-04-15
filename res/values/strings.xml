@@ -8,4 +8,5 @@
     <string name="picture_taker_descriptor">Take a Picture</string>
     <string name="more_appliance_btn">Need more?</string>
     <string name="speak_content_desc">Speak your request</string>
+    <string name="str_download_appliances">Download more appliances</string>
 </resources>

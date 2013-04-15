@@ -43,7 +43,7 @@ import android.util.Xml;
  * @author mhotan
  *
  */
-public class FileManager {
+class FileManager {
 	private static final String TAG = FileManager.class.getSimpleName();
 
 	// Directories
@@ -198,7 +198,7 @@ public class FileManager {
 			throws ApplianceNotExistException {
 		// TODO Implement saving the XML file
 		if (appliance.getDirectoryPath() == null)
-			throw new IllegalArgumentException("Attempting to add a groupp of appliance features" +
+			throw new IllegalArgumentException("Attempting to add a group of appliance features" +
 					"into a directory that doesn't exist.  Call addAppliance(Appliance a) to initialize" +
 					"the directory");
 

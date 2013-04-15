@@ -28,6 +28,7 @@
         </activity>
         <activity android:name=".camera.ExternalApplication"></activity>
         <activity android:name="UserApplianceSelectionActivity"></activity>
+        <activity android:name="DefaultSelectionActivity"></activity>
     </application>
 
 </manifest>

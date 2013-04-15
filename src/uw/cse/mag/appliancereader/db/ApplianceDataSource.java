@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uw.cse.mag.appliancereader.datatype.Appliance;
+import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
+import uw.cse.mag.appliancereader.db.FileManager.ApplianceNotExistException;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -92,6 +94,21 @@ public class ApplianceDataSource {
 		Appliance newApp = cursorToAppliance(cursor);
 		cursor.close();
 		return newApp;
+	}
+	
+	/**
+	 * Save appliance features to this appliace
+	 * @param a Appliance to be saved to
+	 * @param features features to save
+	 * @return true if appliance exist and a file
+	 */
+	public boolean saveApplianceFeatures(Appliance a, ApplianceFeatures features){
+		try {
+			mFileManager.addXMLFile(a, features);
+		} catch (ApplianceNotExistException e) {
+			return false;
+		}
+		return true;
 	}
 
 	/**

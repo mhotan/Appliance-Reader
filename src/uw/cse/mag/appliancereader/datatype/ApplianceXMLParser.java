@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,6 +48,24 @@ public class ApplianceXMLParser {
 	}
 
 	/**
+	 * 
+	 * @param xmlString
+	 * @return
+	 */
+	public static ApplianceFeatures getApplianceFeaturesFromString(String xmlString) {
+		try {
+			XmlPullParser xpp = XmlPullParserFactory.newInstance().newPullParser();
+			xpp.setInput(new StringReader(xmlString));
+			ApplianceFeatures features = new StringApplianceFeatures(xmlString);
+			parse(features, xpp);
+			return features;
+		} catch (XmlPullParserException e) {
+			Log.e(TAG, "Unable to XML parser input string " + xmlString + "!" );
+			return null;
+		}
+	}
+
+	/**
 	 * Returns an ApplianceFeatures for a file path 
 	 * @param filePath Absolute file path for XML document
 	 * @return ApplianceFeatures instance, or null if filePath
@@ -68,7 +87,7 @@ public class ApplianceXMLParser {
 			// Set the input to our parser as our reader
 			xpp.setInput(isr);
 		} catch (XmlPullParserException e) {
-			Log.e(TAG, "Unable to XML parser input" + filePath + "!" );
+			Log.e(TAG, "Unable to XML parser input file at " + filePath + "!" );
 			return null;
 		}
 
@@ -91,7 +110,7 @@ public class ApplianceXMLParser {
 	public static final String FEATURE_PT_X_TAG = "x";
 	public static final String FEATURE_PT_Y_TAG = "y";
 	public static final String FEATURE_SHAPE_TAG = "polygon";
-	
+
 	/**
 	 * Given an XML Pull Parser be able to parse any 
 	 * @param features
@@ -143,9 +162,9 @@ public class ApplianceXMLParser {
 							stringBuffer.append("\nObject Name: " + xpp.getName());
 
 							// TODO Add additional Fields here... 
-							
-							
-							
+
+
+
 							// For every point within the object add to list
 							if (objectType == XmlPullParser.START_TAG &&
 									tagName != null && tagName.equals(FEATURE_PT_TAG)){

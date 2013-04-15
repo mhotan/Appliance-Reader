@@ -89,15 +89,13 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		public String toString(){
 			return mtext;
 		}
-		
-//		public DISPLAY_OPTION valueOf(String option){
-//			for (DISPLAY_OPTION d: mDisplayOptions){
-//				if (d.toString().equals(option))
-//					return d;
-//			}
-//			return DONT_DISPLAY;
-//		}
 	}
+	
+	/**
+	 * Wrapper helper method that gets the Display Option that correlates to the specific String
+	 * @param s
+	 * @return
+	 */
 	private static DISPLAY_OPTION getOption(String s){
 		for (DISPLAY_OPTION d: mDisplayOptions){
 			if (d.toString().equals(s))
@@ -105,6 +103,10 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		}
 		return DISPLAY_OPTION.DONT_DISPLAY;
 	} 
+	
+	/**
+	 * 
+	 */
 	private DISPLAY_OPTION mCurrentOption;
 
 	//TODO Fix hardcode

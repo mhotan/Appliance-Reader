@@ -80,9 +80,9 @@ containing a value of this type.
         public static final int choose_picture_button=0x7f050009;
         public static final int display_option_spinner=0x7f050003;
         public static final int front=0x7f050002;
-        public static final int imageButton1=0x7f050006;
         public static final int menu_settings=0x7f05000a;
         public static final int more_appliance_button=0x7f050005;
+        public static final int speak_button=0x7f050006;
         public static final int take_picture_button=0x7f050008;
     }
     public static final class layout {
@@ -101,6 +101,7 @@ containing a value of this type.
         public static final int picture_chooser_descriptor=0x7f070003;
         public static final int picture_taker_descriptor=0x7f070004;
         public static final int speak_content_desc=0x7f070006;
+        public static final int str_download_appliances=0x7f070007;
     }
     public static final class style {
         /** 
