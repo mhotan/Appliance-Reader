@@ -68,8 +68,8 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/ApplianceReaderSpecific/";
 	public static final String APPLIANCES_PATH = DATA_PATH + "Appliances/";
 
-	private static final int REQUESTCODE_REFERENCE_IMG = 1;
-
+	
+	private static boolean DEBUG = false;
 	
 	/*
 	 * DEBUG: The following 
@@ -105,13 +105,14 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	} 
 	
 	/**
-	 * 
+	 * This the a main parameter mostly used for debugging to look at
+	 * different outputs of opencv calls of the same appliance
 	 */
 	private DISPLAY_OPTION mCurrentOption;
 
 	//TODO Fix hardcode
-	private static String thermostat = "thermostat";
-	private static String book = "book";
+//	private static String thermostat = "thermostat";
+//	private static String book = "book";
 	/**
 	 * Computer vision instance that can handle 
 	 * all Computer Vision oriented task
@@ -120,12 +121,12 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 	private CameraBridgeViewBase mOpenCvCameraView;
 
-	private ApplianceFeatures mRefImageSet;
+//	private ApplianceFeatures mRefImageSet;
 
-	private FileManager fileManager;
-
-	private String mCurrentAppliance;
-
+//	private FileManager fileManager;
+//
+//	private String mCurrentAppliance;
+//
 	private Spinner mDisplayOptSpinner;
 	
 	// Asyncronous calculators
@@ -138,7 +139,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 	private Mat mRgba;
 	private ImageInformation mRefImgInfo;
-	private static boolean DEBUG = false;
+	
 	private static final String DEFAULT_APPLIANCE = "_UNKNOWN_";
 
 	@Override
@@ -546,17 +547,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	@Override
 	public void cvLoge(String tag, String msg) {}
 
-	/**
-	 * Starts activity to obtain image for further processing
-	 * Img address is set to 
-	 * @param id
-	 */
-	private void getImageForReference(int extraREquest){
-		Log.d(TAG,"Calling camera intent"); 
-		Intent i = new Intent(this, ExternalApplication.class);
-		i.putExtra(ExternalApplication.EXTRA_SPECIFIC_REQUEST_TYPE, extraREquest);
-		startActivityForResult(i, REQUESTCODE_REFERENCE_IMG);
-	} 
+	
 
 	/**
 	 * Starts activity to obtain image for further processing
@@ -580,6 +571,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 			t.show();
 			return;
 		}
+		
 		//The user is given two option upon return
 		// either take an image or choose an existing images
 		String filePath = data.getExtras().getString(BaseImageTaker.INTENT_RESULT_IMAGE_PATH);

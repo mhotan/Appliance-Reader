@@ -7,14 +7,17 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 
+import uw.cse.mag.appliancereader.camera.ExternalApplication;
+
 import android.R;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 public class DefaultApplianceFeatureLoader {
 
 	private static final String TAG = DefaultApplianceFeatureLoader.class.getSimpleName();
-
+	
 	/**
 	 * Returns an a list of String formatted as an XML Document
 	 * A non usable XML format may be attemted to read
@@ -70,5 +73,4 @@ public class DefaultApplianceFeatureLoader {
 		}
 		return text.toString();
 	}
-
 }
