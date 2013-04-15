@@ -4,14 +4,20 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import uw.cse.mag.appliancereader.camera.BaseImageTaker;
 import uw.cse.mag.appliancereader.camera.ExternalApplication;
 import uw.cse.mag.appliancereader.datatype.Appliance;
 import uw.cse.mag.appliancereader.db.ApplianceDataSource;
 import uw.cse.mag.appliancereader.db.ApplianceDataSource.DatabaseNotInitializedException;
 import uw.cse.mag.appliancereader.db.UserAppliancesSQLiteHelper;
+import uw.cse.mag.appliancereader.util.ImageIO;
+import uw.cse.mag.appliancereader.util.Util;
 import android.app.ListActivity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.widget.AdapterView;
@@ -20,9 +26,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class UserApplianceSelectionActivity extends ListActivity implements OnLongClickListener {
 
+	private static final String TAG = UserApplianceSelectionActivity.class.getSimpleName();
 	private static final Logger log = Logger.getLogger(UserApplianceSelectionActivity.class.getSimpleName()); 
 	private static final int REQUEST_CODE_DEFAULT_APPLIANCES = 0x1;
 	private static final int REQUESTCODE_REFERENCE_IMG = REQUEST_CODE_DEFAULT_APPLIANCES + 1;
@@ -116,26 +124,81 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 		super.onActivityResult(requestCode, resultCode, data);
 
 		if (resultCode == RESULT_OK) {
-			switch (requestCode) {
-			case REQUEST_CODE_DEFAULT_APPLIANCES : 
-				
-				Bundle b = data.getBundleExtra(Appliance.KEY_BUNDLE_APPLIANCE);
-				Appliance app = Appliance.toAppliance(b);
-				try {
+			try {
+				switch (requestCode) {
+				case REQUEST_CODE_DEFAULT_APPLIANCES : 
+
+					Bundle b = data.getBundleExtra(Appliance.KEY_BUNDLE_APPLIANCE);
+					Appliance app = Appliance.toAppliance(b);
+
 					datasource.createAppliance(app);
-				} catch (DatabaseNotInitializedException e) {
-					log.log(Level.SEVERE, "Database was not intialized for appliance: " + app);
+					break;
+				case REQUESTCODE_REFERENCE_IMG: 
+					// Add more cases
+
+					// New appliance to store
+					Bitmap img = processNewAppliance(data);
+
+					// TODO Ask user for name
+					String timeStamp = Util.getTimeStamp();
+					String name = "Unknown_" + timeStamp;
+
+					//TODO Ask user to draw bounding box.
+					Appliance a = new Appliance();
+					a.setNickName(name);
+					// Save the reference image
+					datasource.createAppliance(a);
+					datasource.saveApplianceReferenceImage(a, img);
 				}
-				
-				// Perculate back result
+				// Always executes
 				setResult(resultCode, data);
 				finish();
-				break;
-			case REQUESTCODE_REFERENCE_IMG: 
-				// ADd more cases
+			} catch (DatabaseNotInitializedException e) {
+				log.log(Level.SEVERE, "Database was not intialized for appliance e: " + e);
 			}
 		}
 
+	}
+
+	private Bitmap processNewAppliance(Intent data) {
+		//The user is given two option upon return
+		// either take an image or choose an existing images
+		String filePath = data.getExtras().getString(BaseImageTaker.INTENT_RESULT_IMAGE_PATH);
+		Uri uri = data.getExtras().getParcelable(BaseImageTaker.INTENT_RESULT_IMAGE_URI); 
+
+		// Save full size image as reference, scale later
+		Bitmap image;
+		// Upload our image for manipulation
+		// We can only choose so for now prioritize choosing the the image
+		// taken through the camera
+		if (filePath != null){
+			//			image = ImageIO.loadBitmapFromFilePath(filePath, null);
+			image = ImageIO.loadBitmapFromFilePath(filePath, null);
+		} else if (uri != null) {
+			//			image = ImageIO.loadBitmapFromURI(getContentResolver(), uri, null);
+			image = ImageIO.loadBitmapFromURI(getContentResolver(), uri, null);
+		} else {
+			throw new RuntimeException("Unable to load any image from External Application");
+		}
+
+		String message = null;
+		// Have to check if there was an error interpretting the image
+		if ( image == null ){ // This should never happen where it cant load an image
+			message = "Null image cannot display";
+			Log.e(TAG, message);
+			String tMessage = "Unable to upload Image at ";
+			if ( filePath != null)
+				tMessage += filePath;
+			else if (uri != null)
+				tMessage += uri.toString();
+			else 
+				tMessage += "Unknown Source";
+			Toast t = Toast.makeText(this, tMessage, Toast.LENGTH_LONG);
+			t.show();
+			return null;
+		} 
+		// TODO Speak Error
+		return image;
 	}
 
 	@Override
@@ -146,6 +209,7 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 			this.startActivityForResult(i, REQUEST_CODE_DEFAULT_APPLIANCES);
 		} else if (v == mSpeakButton) {
 			// TODO Implement
+			Util.getNotImplementedDialog(getApplicationContext()).show();
 		}
 		return true;
 	}
@@ -156,12 +220,12 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 	 * @param id
 	 */
 	private void getImageForReference(int extraREquest){
-//		Log.d(TAG,"Calling camera intent"); 
+		//		Log.d(TAG,"Calling camera intent"); 
 		Intent i = new Intent(this, ExternalApplication.class);
 		i.putExtra(ExternalApplication.EXTRA_SPECIFIC_REQUEST_TYPE, extraREquest);
 		startActivityForResult(i, REQUESTCODE_REFERENCE_IMG);
 	} 
-	
+
 	private static final String TAKE_PICTURE = "Take a picture of a new appliance?";
 	public class TakePictureOption extends Appliance {
 

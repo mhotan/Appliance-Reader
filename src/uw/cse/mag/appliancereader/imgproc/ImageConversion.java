@@ -1,9 +1,14 @@
 package uw.cse.mag.appliancereader.imgproc;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 public class ImageConversion {
 
@@ -28,6 +33,14 @@ public class ImageConversion {
 		Mat mat = new Mat();
 		Utils.bitmapToMat(b, mat);
 		return mat;
+	}
+	
+	/**
+	 * 
+	 * @param f
+	 */
+	public static Bitmap resourceToBitmap(Context ctx, int resId){
+		return BitmapFactory.decodeResource(ctx.getResources(), resId);
 	}
 	
 }

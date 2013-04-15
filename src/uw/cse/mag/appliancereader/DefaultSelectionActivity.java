@@ -1,7 +1,6 @@
 package uw.cse.mag.appliancereader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,10 +12,13 @@ import uw.cse.mag.appliancereader.db.ApplianceDataSource;
 import uw.cse.mag.appliancereader.db.ApplianceDataSource.DatabaseNotInitializedException;
 import uw.cse.mag.appliancereader.db.DefaultApplianceFeatureLoader;
 import uw.cse.mag.appliancereader.db.DefaultApplianceSQLiteHelper;
+import uw.cse.mag.appliancereader.imgproc.ImageConversion;
 import uw.cse.mag.appliancereader.util.Util;
 import android.app.ListActivity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.widget.AdapterView;
@@ -28,6 +30,7 @@ import android.widget.ListView;
 
 public class DefaultSelectionActivity extends ListActivity implements OnLongClickListener {
 
+	private static final String TAG = DefaultSelectionActivity.class.getSimpleName();
 	private static final Logger log = Logger.getLogger(DefaultSelectionActivity.class.getSimpleName()); 
 
 	private ApplianceDataSource datasource;
@@ -52,29 +55,51 @@ public class DefaultSelectionActivity extends ListActivity implements OnLongClic
 		if (!datasource.hasAppliances()) {
 			log.log(Level.INFO, "No default appliances were found in database");
 
-			HashMap<String, String> defaultAppliances = null;
+			// TODO Fix hard code and download remote host
+			// Test image
+			String appName = "Linear Algebra Book";
+			String xmlString = DefaultApplianceFeatureLoader.readRawTextFile(
+					this.getApplicationContext(), R.xml.book);
+			ApplianceFeatures features = ApplianceXMLParser.getApplianceFeaturesFromString(
+					xmlString);
+			Bitmap b = ImageConversion.resourceToBitmap(
+					this.getApplicationContext(), R.raw.book);
+			
+			Appliance a = new Appliance();
+			a.setNickName(appName);
 			try {
-				defaultAppliances = DefaultApplianceFeatureLoader.getDefaultAppliances(this);
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Unable to obtain XML files that store XML representation of appliance features");
+				a = datasource.createAppliance(a);
+				datasource.saveApplianceReferenceImage(a, b);
+				datasource.saveApplianceFeatures(a, features);
+			} catch (DatabaseNotInitializedException e) {
+				Log.e(TAG, "database closed accidently");
 			}
-
-			for (String appName: defaultAppliances.keySet()){
-				ApplianceFeatures features = ApplianceXMLParser.getApplianceFeaturesFromString(
-						defaultAppliances.get(appName));
-				// Appliance 
-				Appliance a = new Appliance();
-				a.setNickName(appName);
-
-				try {
-					a = datasource.createAppliance(a);
-					if (!datasource.saveApplianceFeatures(a, features)){
-						log.log(Level.SEVERE, "Appliance was not in database right after atomic insertion");
-					}
-				} catch (DatabaseNotInitializedException e) {
-					log.log(Level.SEVERE, "Database was closed inadvertantly");
-				}
-			}
+			
+			// Add more default appliance
+//			
+//			HashMap<String, String> defaultAppliances = null;
+//			try {
+//				defaultAppliances = DefaultApplianceFeatureLoader.getDefaultAppliances(this);
+//			} catch (Exception e) {
+//				log.log(Level.SEVERE, "Unable to obtain XML files that store XML representation of appliance features");
+//			}
+//
+//			for (String appName: defaultAppliances.keySet()){
+//				ApplianceFeatures features = ApplianceXMLParser.getApplianceFeaturesFromString(
+//						defaultAppliances.get(appName));
+//				// Appliance 
+//				Appliance a = new Appliance();
+//				a.setNickName(appName);
+//
+//				try {
+//					a = datasource.createAppliance(a);
+//					if (!datasource.saveApplianceFeatures(a, features)){
+//						log.log(Level.SEVERE, "Appliance was not in database right after atomic insertion");
+//					}
+//				} catch (DatabaseNotInitializedException e) {
+//					log.log(Level.SEVERE, "Database was closed inadvertantly");
+//				}
+//			}
 		}
 
 		ArrayAdapter<?> adapter;

@@ -4,11 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import org.opencv.core.Point;
@@ -19,6 +16,7 @@ import uw.cse.mag.appliancereader.datatype.ApplianceFeature;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
 import uw.cse.mag.appliancereader.datatype.ApplianceXMLParser;
 import uw.cse.mag.appliancereader.util.ImageIO;
+import uw.cse.mag.appliancereader.util.Util;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.util.Log;
@@ -350,28 +348,12 @@ class FileManager {
 	////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Returns a date format for saving files
-	 * 
-	 *  Format returned: MM/DD/YR_HR:MI_(AM or PM)
-	 * 
-	 * @return A Short time stamp with out white spaces
-	 */
-	private String getTimeStamp(){
-		Date date = new Date();
-		DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
-		String timeStamp = df.format(date);	
-		timeStamp = timeStamp.trim();
-		timeStamp = timeStamp.replaceAll(" ", "_");
-		return 	timeStamp;
-	}
-
-	/**
 	 * Creates a standerd format directory that
 	 * correlates with id and current timestamp
 	 * @return path to root of directory
 	 */
 	private String createNewDirectory(long id){
-		String path = APPLIANCES_PATH + id + "_" + getTimeStamp() + "/";
+		String path = APPLIANCES_PATH + id + "_" + Util.getTimeStamp() + "/";
 		addDirectory(path);
 
 		// Add all the subdirectories

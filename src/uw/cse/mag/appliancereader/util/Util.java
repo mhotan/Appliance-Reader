@@ -1,5 +1,9 @@
 package uw.cse.mag.appliancereader.util;
 
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -43,6 +47,22 @@ public class Util {
 			}
 		});
 		return alertDialog;
+	}
+	
+	/**
+	 * Returns a date format for saving files
+	 * 
+	 *  Format returned: MM/DD/YR_HR:MI_(AM or PM)
+	 * 
+	 * @return A Short time stamp with out white spaces
+	 */
+	public static String getTimeStamp(){
+		Date date = new Date();
+		DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
+		String timeStamp = df.format(date);	
+		timeStamp = timeStamp.trim();
+		timeStamp = timeStamp.replaceAll(" ", "_");
+		return 	timeStamp;
 	}
 
 }

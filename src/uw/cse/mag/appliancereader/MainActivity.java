@@ -1,8 +1,6 @@
 package uw.cse.mag.appliancereader;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import org.opencv.android.CameraBridgeViewBase;
@@ -11,7 +9,6 @@ import org.opencv.android.JavaCameraView;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.xmlpull.v1.XmlPullParserException;
 
 import uw.cse.mag.appliancereader.camera.BaseImageTaker;
 import uw.cse.mag.appliancereader.camera.ExternalApplication;
@@ -26,8 +23,7 @@ import uw.cse.mag.appliancereader.cv.async.AsyncFeatureDrawer.OnFeaturesDrawnLis
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper;
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper.ImageWarpListener;
 import uw.cse.mag.appliancereader.cv.async.ImageInformation;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
-import uw.cse.mag.appliancereader.db.FileManager;
+import uw.cse.mag.appliancereader.datatype.Appliance;
 import uw.cse.mag.appliancereader.db.FileManager.ApplianceNotExistException;
 import uw.cse.mag.appliancereader.imgproc.ImageConversion;
 import uw.cse.mag.appliancereader.imgproc.Size;
@@ -67,52 +63,16 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	// String representations of storage
 	public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/ApplianceReaderSpecific/";
 	public static final String APPLIANCES_PATH = DATA_PATH + "Appliances/";
-
 	
-	private static boolean DEBUG = false;
-	
-	/*
-	 * DEBUG: The following 
-	 */
-	private static final DISPLAY_OPTION[] mDisplayOptions = {DISPLAY_OPTION.DONT_DISPLAY, 
-		DISPLAY_OPTION.FEATURES, DISPLAY_OPTION.BOX, DISPLAY_OPTION.WARP_IMG };
-	private enum DISPLAY_OPTION {FEATURES("Display Features"), 
-		WARP_IMG("Display Warp"), BOX("Display Box"), DONT_DISPLAY("Don't Display");
-	
-		private final String mtext;
-	
-		private DISPLAY_OPTION(String text){
-			mtext = text;
-		}
-	
-		@Override
-		public String toString(){
-			return mtext;
-		}
-	}
-	
-	/**
-	 * Wrapper helper method that gets the Display Option that correlates to the specific String
-	 * @param s
-	 * @return
-	 */
-	private static DISPLAY_OPTION getOption(String s){
-		for (DISPLAY_OPTION d: mDisplayOptions){
-			if (d.toString().equals(s))
-				return d;
-		}
-		return DISPLAY_OPTION.DONT_DISPLAY;
-	} 
+	private static final int SELECT_APPLIANCE = 0x1;
 	
 	/**
 	 * This the a main parameter mostly used for debugging to look at
 	 * different outputs of opencv calls of the same appliance
 	 */
 	private DISPLAY_OPTION mCurrentOption;
-
-	//TODO Fix hardcode
-//	private static String thermostat = "thermostat";
-//	private static String book = "book";
+    
+  
 	/**
 	 * Computer vision instance that can handle 
 	 * all Computer Vision oriented task
@@ -125,8 +85,8 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 //	private FileManager fileManager;
 //
-//	private String mCurrentAppliance;
-//
+	private Appliance mCurrentAppliance;
+
 	private Spinner mDisplayOptSpinner;
 	
 	// Asyncronous calculators
@@ -154,10 +114,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 		mOpenCvCameraView.setCvCameraViewListener(this);
-
-		// Establish directories for saving image files
-		fileManager = FileManager.getInstance();
-
+				
 		// Load our default image
 		// TODO Make this more robust possible in an exterior class/interface
 		// Encapsulate some how to make it portable
@@ -167,68 +124,21 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		mCurrentOption = getOption((String)mDisplayOptSpinner.getSelectedItem());
 		// Dont enable until ready
 		mDisplayOptSpinner.setEnabled(false);
-		
-		mRefImageSet = null;
-
-		if (DEBUG){
-			// Test
-			try {
-				mRefImageSet = new XMLTestImageSet(this, R.xml.book);
-			} catch (IOException e) {
-				Log.e(TAG, "IOException occured when trying to load Reference image: " + e.getMessage());
-			} catch (XmlPullParserException e) {
-				Log.e(TAG, "XML Parser Exception occured when trying to load Reference image: " + e.getMessage());
-			}
-			if (mRefImageSet == null)
-				Log.e(TAG, "Unable to load default data");
-
-			// Attempt to load 
-			String refImgPath = null; 
-			setCurrentApplianceName(book);
-			try {
-				createNewApplianceDirectory(mCurrentAppliance);
-				refImgPath = fileManager.getReferenceImage(mCurrentAppliance);
-				if (refImgPath == null) {
-					// Lets choose one from gallery
-					getImageForReference(ExternalApplication.CHOOSE_PICTURE_RESULT);
-				} 
-			} catch (NameFormatException e) {
-				Log.e(TAG, "Could not obtain book: " + e.getMessage());
-				e.printStackTrace();
-			}
-		} else {
-			String name = createDefaultName();
-			if (!createNewApplianceDirectory(name))
-				Log.e(TAG, "Unable to create name"); // Should never do
-			setCurrentApplianceName(name);
-			getImageForReference();
-		}
 
 		// Create a computer vision instance to handle all the procedures
 		mCV = new ComputerVision(this.getApplicationContext(), this, this);
+	
+		mCurrentAppliance = new AppliancePeferenceSharer(this).getLastAppliance();
+		if (mCurrentAppliance == null) {
+			// Unable to find last appliance
+			Intent i = new Intent(this, UserApplianceSelectionActivity.class);
+			startActivityForResult(i, SELECT_APPLIANCE);
+		} else {
+			Log.i(TAG, "Past Appliance found!");
+		}
 	}
 
-	private void initializeDisplayOptions(Spinner s) {
-		List<String> list = new ArrayList<String>();
-		for (DISPLAY_OPTION d: mDisplayOptions){
-			list.add(d.toString());
-		}
-		ArrayAdapter<String> dataAdapter = 
-				new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, list);
-		dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		s.setAdapter(dataAdapter);
 
-		//Set the default value
-		String defualtOpt = mDisplayOptions[0].toString();
-		int num = s.getCount();
-		for (int i = 0; i < num; ++i){
-			if (s.getItemAtPosition(i).equals(defualtOpt)) {
-				s.setSelection(i);
-				break;
-			}
-		}
-		s.setOnItemSelectedListener(this);
-	}
 	
 	@Override
 	public void onItemSelected(AdapterView<?> spinner, View arg1, int pos,
@@ -241,51 +151,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	@Override
 	public void onNothingSelected(AdapterView<?> spinner) {
 	}
-	
-	/**
-	 * Returns a unique name for a appliance that does not have a set 
-	 * name
-	 * @return unique name
-	 */
-	private String createDefaultName(){
-		Calendar c = Calendar.getInstance(); 
-		List<Integer> time = new ArrayList<Integer>();
-		time.add(c.get(Calendar.YEAR));
-		time.add(c.get(Calendar.MONTH));
-		time.add(c.get(Calendar.DAY_OF_WEEK));
-		time.add(c.get(Calendar.HOUR_OF_DAY));
-		time.add(c.get(Calendar.MINUTE));
-		time.add(c.get(Calendar.SECOND));
-		String s = DEFAULT_APPLIANCE;
-		for (Integer i: time)
-			s += "_" + i;
-		return s;
-	}
 
-
-	/**
-	 * For each new application we came across 
-	 * @param name
-	 * @return
-	 */
-	private boolean createNewApplianceDirectory(String name) {
-		try {
-			if (!fileManager.hasAppliance(name)){
-				// Add it if it doesnt exist
-				fileManager.addAppliance(name);
-			}
-		} catch (NameFormatException e) {
-			return false;
-		} 
-		return true;
-	}
-
-	private void setCurrentApplianceName(String name){
-		if (name == null){
-			mCurrentAppliance = createDefaultName();
-		}else 
-			mCurrentAppliance = name;
-	}
 
 	@Override
 	public void onPause()
@@ -304,6 +170,12 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		mCV.initializeService();
 	}
 
+	@Override
+	public void onStop(){
+		super.onStop();
+		new AppliancePeferenceSharer(this).saveAppliance(mCurrentAppliance);
+	}
+	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -547,17 +419,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	@Override
 	public void cvLoge(String tag, String msg) {}
 
-	
-
-	/**
-	 * Starts activity to obtain image for further processing
-	 * Img address is set to 
-	 * @param id
-	 */
-	private void getImageForReference(){
-		getImageForReference(-1);
-	} 
-
 	// Called when a started intent return
 	// In our case it for when External Application returns 
 	// an image
@@ -572,43 +433,12 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 			return;
 		}
 		
-		//The user is given two option upon return
-		// either take an image or choose an existing images
-		String filePath = data.getExtras().getString(BaseImageTaker.INTENT_RESULT_IMAGE_PATH);
-		Uri uri = data.getExtras().getParcelable(BaseImageTaker.INTENT_RESULT_IMAGE_URI); 
-
-		// Save full size image as reference, scale later
-		Bitmap image;
-		// Upload our image for manipulation
-		// We can only choose so for now prioritize choosing the the image
-		// taken through the camera
-		if (filePath != null){
-			//			image = ImageIO.loadBitmapFromFilePath(filePath, null);
-			image = ImageIO.loadBitmapFromFilePath(filePath, null);
-		} else if (uri != null) {
-			//			image = ImageIO.loadBitmapFromURI(getContentResolver(), uri, null);
-			image = ImageIO.loadBitmapFromURI(getContentResolver(), uri, null);
-		} else {
-			throw new RuntimeException("Unable to load any image from External Application");
-		}
-
-
-		// Have to check if there was an error interpretting the image
-		if ( image == null ){ // This should never happen where it cant load an image
-			message = "Null image cannot display";
-			Log.e(TAG, message);
-			String tMessage = "Unable to upload Image at ";
-			if ( filePath != null)
-				tMessage += filePath;
-			else if (uri != null)
-				tMessage += uri.toString();
-			else 
-				tMessage += "Unknown Source";
-			Toast t = Toast.makeText(this, tMessage, Toast.LENGTH_LONG);
-			t.show();
-			return;
-		} 
-
+		Bundle b = data.getBundleExtra(Appliance.KEY_BUNDLE_APPLIANCE);
+		Appliance a = Appliance.toAppliance(b);
+		
+		if (a == null)
+			Log.e(TAG, "Null Appliance on return");
+		
 		// If reference image
 		if (requestCode == REQUESTCODE_REFERENCE_IMG){
 			// Save new image as reference
@@ -632,6 +462,99 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	///// Private Helper class that will help encapsulate Tranformation Builder Procedure
 	////////////////////////////////////////////////////////////////////
 
+	/**
+	 * Initializes spinners for display options
+	 * @param s
+	 */
+	private void initializeDisplayOptions(Spinner s) {
+		ArrayAdapter<DISPLAY_OPTION> dataAdapter = 
+				new ArrayAdapter<DISPLAY_OPTION>(this, android.R.layout.simple_spinner_item, mDisplayOptions);
+		dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		s.setAdapter(dataAdapter);
 
+		//Set the default value
+		String defualtOpt = mDisplayOptions[0].toString();
+		int num = s.getCount();
+		for (int i = 0; i < num; ++i){
+			if (s.getItemAtPosition(i).equals(defualtOpt)) {
+				s.setSelection(i);
+				break;
+			}
+		}
+		s.setOnItemSelectedListener(this);
+	}
 
+	private static boolean DEBUG = false;
+	
+	/*
+	 * DEBUG: The following 
+	 */
+	private static final DISPLAY_OPTION[] mDisplayOptions = {DISPLAY_OPTION.DONT_DISPLAY, 
+		DISPLAY_OPTION.FEATURES, DISPLAY_OPTION.BOX, DISPLAY_OPTION.WARP_IMG };
+	private enum DISPLAY_OPTION {
+		FEATURES("Display Features"), 
+		WARP_IMG("Display Warp"), 
+		BOX("Display Box"), 
+		DONT_DISPLAY("Don't Display");
+	
+		private final String mtext;
+	
+		private DISPLAY_OPTION(String text){
+			mtext = text;
+		}
+	
+		@Override
+		public String toString(){
+			return mtext;
+		}
+	}
+
+	/**
+	 * Wrapper helper method that gets the Display Option that correlates to the specific String
+	 * @param s
+	 * @return
+	 */
+	private static DISPLAY_OPTION getOption(String s){
+		for (DISPLAY_OPTION d: mDisplayOptions){
+			if (d.toString().equals(s))
+				return d;
+		}
+		return DISPLAY_OPTION.DONT_DISPLAY;
+	} 
 }
+
+//mRefImageSet = null;
+//
+//if (DEBUG){
+//	// Test
+//	try {
+//		mRefImageSet = new XMLTestImageSet(this, R.xml.book);
+//	} catch (IOException e) {
+//		Log.e(TAG, "IOException occured when trying to load Reference image: " + e.getMessage());
+//	} catch (XmlPullParserException e) {
+//		Log.e(TAG, "XML Parser Exception occured when trying to load Reference image: " + e.getMessage());
+//	}
+//	if (mRefImageSet == null)
+//		Log.e(TAG, "Unable to load default data");
+//
+//	// Attempt to load 
+//	String refImgPath = null; 
+//	setCurrentApplianceName(book);
+//	try {
+//		createNewApplianceDirectory(mCurrentAppliance);
+//		refImgPath = fileManager.getReferenceImage(mCurrentAppliance);
+//		if (refImgPath == null) {
+//			// Lets choose one from gallery
+//			getImageForReference(ExternalApplication.CHOOSE_PICTURE_RESULT);
+//		} 
+//	} catch (NameFormatException e) {
+//		Log.e(TAG, "Could not obtain book: " + e.getMessage());
+//		e.printStackTrace();
+//	}
+//} else {
+//	String name = createDefaultName();
+//	if (!createNewApplianceDirectory(name))
+//		Log.e(TAG, "Unable to create name"); // Should never do
+//	setCurrentApplianceName(name);
+//	getImageForReference();
+//}

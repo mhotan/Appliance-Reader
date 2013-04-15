@@ -151,6 +151,7 @@ public class Appliance {
 	 * @return null if Bundle doesn't represent appliance, Apliance otherwise 
 	 */
 	public static Appliance toAppliance(Bundle b){
+		if (b == null) return null;
 		long id = b.getLong(BUNDLE_ID, -1);
 		if (id == -1L) return null;
 		Appliance a = new Appliance();

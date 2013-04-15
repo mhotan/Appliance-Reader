@@ -5,9 +5,18 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.entity.BufferedHttpEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import uw.cse.mag.appliancereader.imgproc.Size;
-
 import android.content.ContentResolver;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -17,6 +26,28 @@ import android.util.Log;
 
 public class ImageIO {
 	private static final String TAG = ImageIO.class.getSimpleName();
+
+	public static void downloadImgs(URL url) throws ClientProtocolException, IOException{
+		HttpGet httpRequest = null;
+
+		try {
+			httpRequest = new HttpGet(url.toURI());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+
+		HttpClient httpclient = new DefaultHttpClient();
+
+		HttpResponse response = (HttpResponse) httpclient.execute(httpRequest);
+
+		HttpEntity entity = response.getEntity();
+
+		BufferedHttpEntity bufHttpEntity = new BufferedHttpEntity(entity);
+
+		InputStream instream = bufHttpEntity.getContent();
+
+		Bitmap bmp = BitmapFactory.decodeStream(instream);
+	}
 
 	/**
 	 * Saves a Bitmap image to the string path

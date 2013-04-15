@@ -2,6 +2,7 @@ package uw.cse.mag.appliancereader.db;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import uw.cse.mag.appliancereader.datatype.Appliance;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
@@ -10,6 +11,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.util.Log;
 
 /**
  * Data model that allows access to Appliance Databases
@@ -22,6 +25,9 @@ import android.database.sqlite.SQLiteDatabase;
  */
 public class ApplianceDataSource {
 
+	private static final String TAG = ApplianceDataSource.class.getSimpleName();
+	private static final Logger log = Logger.getLogger(ApplianceDataSource.class.getSimpleName());
+	
 	private SQLiteDatabase mDB;
 	private ApplianceSQLiteHelper mSQLHelper;
 
@@ -95,7 +101,7 @@ public class ApplianceDataSource {
 		cursor.close();
 		return newApp;
 	}
-	
+
 	/**
 	 * Save appliance features to this appliace
 	 * @param a Appliance to be saved to
@@ -106,6 +112,18 @@ public class ApplianceDataSource {
 		try {
 			mFileManager.addXMLFile(a, features);
 		} catch (ApplianceNotExistException e) {
+			Log.w(TAG, "Unable to load appliance features Exception: " + e);
+			return false;
+		}
+		return true;
+	}
+
+
+	public boolean saveApplianceReferenceImage(Appliance a, Bitmap b){
+		try {
+			mFileManager.setReferenceImage(a, b);
+		} catch (ApplianceNotExistException e) {
+			Log.w(TAG, "Unable to load appliance features");
 			return false;
 		}
 		return true;
@@ -149,7 +167,7 @@ public class ApplianceDataSource {
 		c.close();
 		return appliances;
 	}
-	
+
 	public boolean hasAppliances() {
 		Cursor mCursor = mDB.rawQuery("SELECT * FROM " + mSQLHelper.getTableName(), null);
 		if (mCursor.moveToFirst())

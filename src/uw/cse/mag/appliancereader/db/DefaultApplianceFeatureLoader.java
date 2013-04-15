@@ -52,7 +52,7 @@ public class DefaultApplianceFeatureLoader {
 	 * @param resId 
 	 * @return
 	 */
-	private static String readRawTextFile(Context ctx, int resId)
+	public static String readRawTextFile(Context ctx, int resId)
 	{
 		InputStream inputStream = ctx.getResources().openRawResource(resId);
 
