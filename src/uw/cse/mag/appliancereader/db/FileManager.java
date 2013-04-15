@@ -14,7 +14,9 @@ import java.util.Map;
 import org.xmlpull.v1.XmlSerializer;
 
 import uw.cse.mag.appliancereader.datatype.Appliance;
+import uw.cse.mag.appliancereader.datatype.ApplianceFeature;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
+import uw.cse.mag.appliancereader.datatype.ApplianceXMLParser;
 import uw.cse.mag.appliancereader.util.ImageIO;
 import android.graphics.Bitmap;
 import android.os.Environment;
@@ -46,10 +48,10 @@ public class FileManager {
 	// Directories
 	public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/ApplianceReaderSpecific/";
 	public static final String APPLIANCES_PATH = DATA_PATH + "Appliances/";
-	
+
 	// General Storage.. Can store anything in here for short term use.
 	// Does not handle name space issues
-	
+
 	// Sub directories of a given appliance
 	private static final String REFERENCE_IMAGES_DIR = "REF-Images/";
 	private static final String OTHER_IMAGES_DIR = "OTHER-Images/";
@@ -198,25 +200,25 @@ public class FileManager {
 			throw new IllegalArgumentException("Attempting to add a groupp of appliance features" +
 					"into a directory that doesn't exist.  Call addAppliance(Appliance a) to initialize" +
 					"the directory");
-		
+
 		// Check appliance exist 
 		if (!hasAppliance(appliance))
 			throw new ApplianceNotExistException(appliance);
-		
+
 		// Create the file path for the XML
 		String xmlPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + XML_FEATURES_FILE;
 		File xmlFile = new File(xmlPath);
-		
+
 		// Obtain the associated names
 		// This is called before deleting the file to raise a null pointer 
 		// and check for preconditions
 		List<String> featureNames = appFeatures.getFeatures();
-		
+
 		// delete the XML file if it exists
 		if (xmlFile.exists()){
 			xmlFile.delete();
 		}
-		
+
 		xmlFile = new File(xmlPath);
 		try {
 			xmlFile.createNewFile();
@@ -224,7 +226,7 @@ public class FileManager {
 			Log.e(TAG, "Unable to create file to store XML describing features");
 			return;
 		}
-		
+
 		// Bind a file output stream to the xml file
 		FileOutputStream fos = null;
 		try {
@@ -233,22 +235,55 @@ public class FileManager {
 			Log.e(TAG, "FileNotFoundExcetpion. Unable to create File Output stream to store XML describing features, " +
 					"Should not occur because file should have been created");
 		}
-		
+
 		XmlSerializer serializer = Xml.newSerializer();
 		try {
 			// Associate output stream
 			serializer.setOutput(fos, "UTF-8");
-			
+
 			// No XML declaration with encoding
 			// Standalone == true
 			serializer.startDocument(null, true);
-			
+
 			// Set indention
 			serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
-		
+
+			// Set the root as the annotation tag
+			serializer.startTag(null, ApplianceXMLParser.FEATURE_ANNOTATION);
+
+			// TODO Add other TAG here if needed
+			// IE filename, source, etc
 			
+			if (appFeatures != null){
+				for (ApplianceFeature af: appFeatures) {
+					serializer.startTag(null, ApplianceXMLParser.FEATURE_TAG);
+					
+					// Store the name of this feature this is the object tag in Label Me
+					serializer.startTag(null, ApplianceXMLParser.FEATURE_NAME_TAG);
+					serializer.text(af.getName());
+					serializer.endTag(null, ApplianceXMLParser.FEATURE_NAME_TAG);
+					
+					//Add polygon tag in Label ME
+					serializer.startTag(null, ApplianceXMLParser.FEATURE_SHAPE_TAG);
+					
+					for (appFeatures.get)
+					
+					serializer.endTag(null, ApplianceXMLParser.FEATURE_SHAPE_TAG);
+
+					serializer.endTag(null, ApplianceXMLParser.FEATURE_TAG);
+				}
+			}
+
+			// End container document and end the document
+			serializer.endTag(null, ApplianceXMLParser.FEATURE_ANNOTATION);
+			serializer.endDocument();
+
+			// Flush will write the xml to the file
+			serializer.flush();
+			fos.close();
+
 		} catch (Exception e) {
-			
+
 		}
 	}
 
@@ -291,10 +326,10 @@ public class FileManager {
 	}
 
 	public synchronized XMLTestImageSet getFeatures(String appliance){
-		
+
 		XmlSerializer serializer = 
-		// TODO Implement
-		return null;
+				// TODO Implement
+				return null;
 	}
 
 
@@ -404,12 +439,12 @@ public class FileManager {
 	//		return match.find();
 	//	}
 
-		public class ApplianceNotExistException extends IOException {
-			public ApplianceNotExistException(Appliance appliance){
-				super("Appliance:" + appliance+" does not exist on your external drive.  Be sure to addAppliance before setting" +
-						"reference image");
-			}
+	public class ApplianceNotExistException extends IOException {
+		public ApplianceNotExistException(Appliance appliance){
+			super("Appliance:" + appliance+" does not exist on your external drive.  Be sure to addAppliance before setting" +
+					"reference image");
 		}
+	}
 	//
 	//	public class NameFormatException extends Exception {
 	//

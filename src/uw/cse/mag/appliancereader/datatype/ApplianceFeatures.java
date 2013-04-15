@@ -1,10 +1,15 @@
 package uw.cse.mag.appliancereader.datatype;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -18,13 +23,16 @@ import org.opencv.core.Rect;
  * 
  * @author mhotan
  */
-public abstract class ApplianceFeatures {
+public abstract class ApplianceFeatures implements Iterable<ApplianceFeature> {
 
+	private static final Logger log = Logger.getLogger(ApplianceFeatures.class.getSimpleName());
+	
 	/**
 	 * Hidden data abstraction for containing data
 	 * Features are only identified by 
 	 */
-	private final Map<String, List<Point>> mFeatures = new HashMap<String, List<Point>>();
+	private final Map<String, ApplianceFeature> mFeatures = 
+			new HashMap<String, ApplianceFeature>();
 	
 	/**
 	 * Adds a new feature to the appliance image set
@@ -47,7 +55,8 @@ public abstract class ApplianceFeatures {
 		for (Point p: points){
 			hiddenPoints.add(p.clone());
 		}
-		mFeatures.put(featureName, hiddenPoints);
+		
+		mFeatures.put(featureName, new ApplianceFeature(featureName, hiddenPoints));
 	} 
 	 
 	/**
@@ -67,27 +76,24 @@ public abstract class ApplianceFeatures {
 	 * <b>  The point list will not be closed, meaning no two points will be the same
 	 * 
 	 * @param featureName
-	 * @return null if feature does not exist, Empty list when feature is incomplete, else list of Points
+	 * @return null if feature does not exist, Empty list when feature is incomplete, else list of unmodifiable Points
 	 */
-	public List<Point> getShapePoints(final String featureName){
+	public List<Point> getFeature(final String featureName){
 		if (!mFeatures.containsKey(featureName))
 			return null;
-		List<Point> points = new LinkedList<Point>(mFeatures.get(featureName));
-		if (points.size() <= 2){
-			points.clear();
-			return points;
-		}
-		//Create copy of mutable list of points
-		List<Point> hiddenPoints = new LinkedList<Point>();
-		for (Point p: points){
-			hiddenPoints.add(p.clone());
-		}
-		return hiddenPoints;
+		
+		ApplianceFeature appfeature = mFeatures.get(featureName);
+		return appfeature.getPoints();
 	}
 	
 	@Override
 	public String toString(){
-		return mFeatures.toString();
+		StringBuffer buf = new StringBuffer();
+		for (ApplianceFeature feature: getListOfApplianceFeatures()){
+			buf.append(feature);
+			buf.append("\n");
+		}
+		return buf.toString();
 	}
 	
 	/**
@@ -96,14 +102,23 @@ public abstract class ApplianceFeatures {
 	 * @param scaleFactor int factor to scale points down by
 	 */
 	public void scaleDownFeatures(int scaleFactor) {
-		for (String feature: getFeatures()) {
-			List<Point> nList = new ArrayList<Point>();
-			for (Point p: getShapePoints(feature)){
-				Point nPoint = new Point(p.x/scaleFactor, p.y/scaleFactor);
-				nList.add(nPoint);
-			}
-			addFeature(feature, nList);
+		Collection<ApplianceFeature> AppFeatures = mFeatures.values();
+		for (ApplianceFeature a: AppFeatures)
+			a.scaleFeature(1.0 / scaleFactor); // Scale down
+	}
+	
+	/**
+	 * Returns a bounding box for every feature for this appliance.  Each box 
+	 * has parallel vertical line and parallel horizontal lines.  
+	 * @return list of boxes
+	 */
+	public List<Rect> getFeatureBoxes(){
+		List<Rect> boxes = new ArrayList<Rect>();
+		for (ApplianceFeature a: this){
+			if (a == null) continue;
+			boxes.add(a.getBoundingBox());
 		}
+		return boxes;
 	}
 	
 	/**
@@ -111,24 +126,43 @@ public abstract class ApplianceFeatures {
 	 * are contained
 	 * @param scaleFactor int factor to scale points down by
 	 */
-	public org.opencv.core.Rect getBoundingBox() {
-		if (getFeatures().size() ==0) return null;
+	public org.opencv.core.Rect getEncompassingBox() {
+		List<Rect> rects = getFeatureBoxes();
+		if (rects == null) return null;
+		
 		double minX = Double.MAX_VALUE;
 		double minY = Double.MAX_VALUE;
 		double maxX = Double.MIN_VALUE;
 		double maxY = Double.MIN_VALUE;
-		for (String feature: getFeatures()) { // For every Feature
-			for (Point p: getShapePoints(feature)){ // For every point that describes that feature
-				if (p.x < minX) minX = p.x;
-				if (p.x > maxX) maxX = p.x;
-				if (p.y < minY) minY = p.y;
-				if (p.y > maxY) maxY = p.y;
-			}		
+		for (Rect r: getFeatureBoxes()) {
+			if (r.tl().x < minX) minX = r.tl().x;
+			if (r.tl().y < minY) minY = r.tl().y;
+			if (r.br().x > maxX) maxX = r.br().x;
+			if (r.br().y > maxY) maxY = r.br().y;
 		}
+		
 		Point minPt = new Point(minX, minY);
 		Point maxPt = new Point(maxX, maxY);
-		return new Rect(minPt, maxPt);
+		
+		Rect r = new Rect(minPt, maxPt);
+		
+		log.log(Level.INFO, "Bounding box found around all the features TL:" + r.tl() + " BR:" + r.br());
+		
+		return r;
 	}
 	
+	@Override
+	public Iterator<ApplianceFeature> iterator(){
+		return new ApplianceFeatureIterator(getListOfApplianceFeatures());
+	}
 	
+	private List<ApplianceFeature> getListOfApplianceFeatures(){
+		List<String> featureNames = new ArrayList<String>(mFeatures.keySet());
+		Collections.sort(featureNames);
+		List<ApplianceFeature> apps = new ArrayList<ApplianceFeature>(featureNames.size());
+		for (String s: featureNames){
+			apps.add(mFeatures.get(s));
+		}
+		return apps;
+	}
 }

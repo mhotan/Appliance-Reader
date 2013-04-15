@@ -83,10 +83,13 @@ public class ApplianceXMLParser {
 		return features;
 	}
 
-	
+	// Conforms to label me tag
+	public static final String FEATURE_ANNOTATION = "annotation";
 	public static final String FEATURE_TAG = "object";
 	public static final String FEATURE_NAME_TAG = "name";
 	public static final String FEATURE_PT_TAG = "pt";
+	public static final String FEATURE_SHAPE_TAG = "polygon";
+	
 	/**
 	 * Given an XML Pull Parser be able to parse any 
 	 * @param features
