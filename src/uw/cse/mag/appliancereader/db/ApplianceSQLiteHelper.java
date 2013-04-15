@@ -59,9 +59,7 @@ abstract class ApplianceSQLiteHelper extends SQLiteOpenHelper {
 				+ ");"; 
 	}
 	
-	public String getTableName(){
-		return TABLE_NAME;
-	}
+	public abstract String getTableName();
 	
 	@Override
 	public void onCreate(SQLiteDatabase arg0) {

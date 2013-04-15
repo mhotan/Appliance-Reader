@@ -8,7 +8,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.v4.widget.SearchViewCompatIcs.MySearchView;
 
 /**
  * Data model that allows access to Appliance Databases
@@ -20,10 +19,12 @@ import android.support.v4.widget.SearchViewCompatIcs.MySearchView;
  * @author mhotan
  */
 public class ApplianceDataSource {
-	
+
 	private SQLiteDatabase mDB;
-	private ApplianceSQLiteHelper mUserHelper;
-	
+	private ApplianceSQLiteHelper mSQLHelper;
+
+	private final FileManager mFileManager;
+
 	private String[] allColumns = {
 			ApplianceSQLiteHelper.COLUMN_ID,
 			ApplianceSQLiteHelper.COLUMN_NICKNAME,
@@ -31,26 +32,27 @@ public class ApplianceDataSource {
 			ApplianceSQLiteHelper.COLUMN_MODEL,
 			ApplianceSQLiteHelper.COLUMN_DIRECTORY
 	};
-	
+
 	public ApplianceDataSource(ApplianceSQLiteHelper helper){
 		if (helper == null)
 			throw new IllegalArgumentException("[ApplianceDataSource] Passed in Appliance SQLite Helper " +
 					"cannot be null");
-		mUserHelper = helper;
+		mSQLHelper = helper;
+		mFileManager = FileManager.getInstance();
 	}
-	
+
 	/**
 	 * Open this datasource allowing it to be written
 	 */
 	public void open() throws SQLException {
 		try {
-			mDB = mUserHelper.getWritableDatabase();
+			mDB = mSQLHelper.getWritableDatabase();
 		} catch (SQLException e){
 			mDB = null;
 			throw e;
 		}
 	}
-	
+
 	/**
 	 * Closes current connection
 	 */
@@ -60,78 +62,90 @@ public class ApplianceDataSource {
 		mDB.close();
 		mDB = null; // Safety check
 	}
-	
+
+	private void checkDatabase() throws DatabaseNotInitializedException{
+		if (mDB == null)
+			throw new DatabaseNotInitializedException();
+	}
+
 	/**
 	 * 
 	 * @param a appliance to add to the data base
- 	 * @return Appliance that was stored inside the database
+	 * @return Appliance that was stored inside the database
+	 * @throws DatabaseNotInitializedException When Database was not Opened before this call
 	 */
-	public Appliance createAppliance(Appliance a){
-		
-		// Store images in the file system
-		
+	public Appliance createAppliance(Appliance a) throws DatabaseNotInitializedException{
+		checkDatabase();
+
+		// Create a file directory for this appliance
+		a = mFileManager.addAppliance(a);
+
 		// Then attempt to write the 
-//		ContentValues values = applianceToContentValues(a);
-		values.put(ApplianceSQLiteHelper.COLUMN_DIRECTORY, a.getDirectoryPath());
-		
-		long insertId = mDB.insert()
-		
-		// Check if error occured
-		if (a.getID() == -1L){
-			return null;
-		}
-		return null;
-		
-		
+		ContentValues values = applianceToContentValues(a);
+		long insertId = mDB.insert(
+				mSQLHelper.getTableName(), null, values);
+		Cursor cursor = mDB.query(mSQLHelper.getTableName(), 
+				allColumns, ApplianceSQLiteHelper.COLUMN_ID + " = " + insertId,
+				null, null, null, null);
+		cursor.moveToFirst();
+		Appliance newApp = cursorToAppliance(cursor);
+		cursor.close();
+		return newApp;
 	}
-	
+
 	/**
 	 * Delete Appliance from and all knowledge of it  
-	 * @param a Appliance 
+	 * @param a Appliance to delete
+	 * @throws DatabaseNotInitializedException When Database was not Opened before this call
 	 */
-	public void deleteAppliance(Appliance a){
+	public void deleteAppliance(Appliance a) throws DatabaseNotInitializedException{
+		checkDatabase();
+
 		// Delete Appliance from the data base
 		long id = a.getID();
-		mDB.delete(mUserHelper.getTableName(), ApplianceSQLiteHelper.COLUMN_ID
-		        + " = " + id, null);
-		
-		// Then obtain the directory
-		String dir = 	
-		// Delete the directory from external storage
-		
+		mDB.delete(mSQLHelper.getTableName(), ApplianceSQLiteHelper.COLUMN_ID
+				+ " = " + id, null);
 	}
 
 	/**
 	 * Return all the appliance of this table
 	 * @return list of appliances
+	 * @throws DatabaseNotInitializedException When Database was not Opened before this call
 	 */
-	public List<Appliance> getAllAppliances(){
+	public List<Appliance> getAllAppliances() throws DatabaseNotInitializedException{
+		checkDatabase();
+
 		List<Appliance> appliances = new ArrayList<Appliance>();
-		
+
 		// Obtain the cursor to navigate the table
-		Cursor c = mDB.query(mUserHelper.getTableName(),
+		Cursor c = mDB.query(mSQLHelper.getTableName(),
 				allColumns, null, null, null, null, null);
-		
+
 		c.moveToFirst(); // Initialize the cursor
 		while (!c.isAfterLast()){
 			Appliance a = cursorToAppliance(c);
 			appliances.add(a);
 			c.moveToNext();
 		}
-		
+
 		c.close();
 		return appliances;
 	}
-	
+
+	/**
+	 * 
+	 * @param a Appliance to make into ContentValues
+	 * @return ContentValues with key value associations
+	 */
 	private ContentValues applianceToContentValues(Appliance a){
 		ContentValues values = new ContentValues();
 		values.put(ApplianceSQLiteHelper.COLUMN_NICKNAME, a.getNickname());
 		values.put(ApplianceSQLiteHelper.COLUMN_MAKE, a.getMake());
 		values.put(ApplianceSQLiteHelper.COLUMN_MODEL, a.getModel());
-		
+		values.put(ApplianceSQLiteHelper.COLUMN_DIRECTORY, a.getDirectoryPath());
 		return values;
 	}
-	
+
 	private Appliance cursorToAppliance(Cursor c){
 		Appliance a = new Appliance();
 		a.setId(c.getLong(0));
@@ -140,5 +154,14 @@ public class ApplianceDataSource {
 		a.setModel(c.getString(3));
 		a.setDirectoryPath(c.getString(4));
 		return a;
+	}
+
+	private class DatabaseNotInitializedException extends Exception {
+
+		private static final long serialVersionUID = -6690165807139149242L;
+
+		public DatabaseNotInitializedException(){
+			super("Database is not initialized. Must call <Datasource instance>.open()");
+		}
 	}
 }

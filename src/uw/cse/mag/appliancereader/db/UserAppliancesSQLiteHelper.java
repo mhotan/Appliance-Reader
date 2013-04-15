@@ -60,4 +60,9 @@ public class UserAppliancesSQLiteHelper extends ApplianceSQLiteHelper {
 		onCreate(db);
 	}
 
+	@Override
+	public String getTableName() {
+		return TABLE_NAME;
+	}
+
 }

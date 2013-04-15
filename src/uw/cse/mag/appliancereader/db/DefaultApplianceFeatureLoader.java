@@ -1,4 +1,4 @@
-package uw.cse.mag.appliancereader.util;
+package uw.cse.mag.appliancereader.db;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 
-import uw.cse.mag.appliancereader.R;
+import android.R;
 import android.content.Context;
 import android.util.Log;
 

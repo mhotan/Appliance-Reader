@@ -53,33 +53,12 @@ public class ApplianceFeature {
 		}
 	}
 
-
-
-	//	/**
-	//	 * General description of this feature.
-	//	 */
-	//	protected String mDescription;
-	//	
-
-
-	//	/**
-	//	 * Identification number of this feature
-	//	 */
-	//	protected int mID;
-
 	/**
 	 * @return name of this feature
 	 */
 	public String getName(){
 		return mName;
 	}
-
-	//	/**
-	//	 * @return  the description of this feature, Or empty string
-	//	 */
-	//	public String getDescription(){
-	//		return mDescription == null ? EMPTY_STRING : mDescription;
-	//	}
 
 	/**
 	 * @return Copy of the list of  
@@ -152,12 +131,4 @@ public class ApplianceFeature {
 		
 		return r;
 	}
-
-	//	/**
-	//	 * @return Identification number of the feature
-	//	 */
-	//	public int getID(){
-	//		return mID;
-	//	}
-
 }

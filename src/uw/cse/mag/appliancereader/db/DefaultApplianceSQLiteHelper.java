@@ -38,4 +38,9 @@ public class DefaultApplianceSQLiteHelper extends ApplianceSQLiteHelper {
 		db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
 		onCreate(db);
 	}
+
+	@Override
+	public String getTableName() {
+		return TABLE_NAME;
+	}
 }

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.opencv.core.Point;
 import org.xmlpull.v1.XmlSerializer;
 
 import uw.cse.mag.appliancereader.datatype.Appliance;
@@ -51,7 +52,7 @@ public class FileManager {
 
 	// General Storage.. Can store anything in here for short term use.
 	// Does not handle name space issues
-
+	
 	// Sub directories of a given appliance
 	private static final String REFERENCE_IMAGES_DIR = "REF-Images/";
 	private static final String OTHER_IMAGES_DIR = "OTHER-Images/";
@@ -209,11 +210,6 @@ public class FileManager {
 		String xmlPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + XML_FEATURES_FILE;
 		File xmlFile = new File(xmlPath);
 
-		// Obtain the associated names
-		// This is called before deleting the file to raise a null pointer 
-		// and check for preconditions
-		List<String> featureNames = appFeatures.getFeatures();
-
 		// delete the XML file if it exists
 		if (xmlFile.exists()){
 			xmlFile.delete();
@@ -253,21 +249,33 @@ public class FileManager {
 
 			// TODO Add other TAG here if needed
 			// IE filename, source, etc
-			
+
 			if (appFeatures != null){
 				for (ApplianceFeature af: appFeatures) {
 					serializer.startTag(null, ApplianceXMLParser.FEATURE_TAG);
-					
+
 					// Store the name of this feature this is the object tag in Label Me
 					serializer.startTag(null, ApplianceXMLParser.FEATURE_NAME_TAG);
 					serializer.text(af.getName());
 					serializer.endTag(null, ApplianceXMLParser.FEATURE_NAME_TAG);
-					
+
 					//Add polygon tag in Label ME
 					serializer.startTag(null, ApplianceXMLParser.FEATURE_SHAPE_TAG);
-					
-					for (appFeatures.get)
-					
+
+					for (Point p: af.getPoints()){
+						serializer.startTag(null, ApplianceXMLParser.FEATURE_PT_TAG);
+
+						serializer.startTag(null, ApplianceXMLParser.FEATURE_PT_X_TAG);
+						serializer.text(""+p.x);
+						serializer.endTag(null, ApplianceXMLParser.FEATURE_PT_X_TAG);	
+
+						serializer.startTag(null, ApplianceXMLParser.FEATURE_PT_Y_TAG);
+						serializer.text(""+p.y);
+						serializer.endTag(null, ApplianceXMLParser.FEATURE_PT_Y_TAG);
+
+						serializer.endTag(null, ApplianceXMLParser.FEATURE_PT_TAG);
+					}
+
 					serializer.endTag(null, ApplianceXMLParser.FEATURE_SHAPE_TAG);
 
 					serializer.endTag(null, ApplianceXMLParser.FEATURE_TAG);
@@ -281,9 +289,8 @@ public class FileManager {
 			// Flush will write the xml to the file
 			serializer.flush();
 			fos.close();
-
 		} catch (Exception e) {
-
+			Log.e(TAG, "Unable to save XML representation Exception: " + e.getMessage());
 		}
 	}
 
@@ -312,7 +319,7 @@ public class FileManager {
 	 */
 	public synchronized String getReferenceImage(Appliance appliance) {
 		if (hasAppliance(appliance)){
-			String refPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + ;
+			String refPath = mApplianceDirectories.get(appliance) + REFERENCE_IMAGES_DIR + REFERENCE_IMG_FILE;;
 			File refFile = new File(refPath);
 			if (refFile.exists())
 				return refFile.getAbsolutePath();
@@ -325,11 +332,16 @@ public class FileManager {
 		return null;
 	}
 
-	public synchronized XMLTestImageSet getFeatures(String appliance){
-
-		XmlSerializer serializer = 
-				// TODO Implement
-				return null;
+	public synchronized ApplianceFeatures getFeatures(Appliance appliance){
+		String xmlPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + XML_FEATURES_FILE;
+		ApplianceFeatures features = null;
+		try {
+			features = ApplianceXMLParser.getApplianceFeatures(xmlPath);
+		} catch (IOException e) {
+			Log.e(TAG, "Unable to load file features at:" + xmlPath);
+			e.printStackTrace();
+		}
+		return features;
 	}
 
 
@@ -391,7 +403,7 @@ public class FileManager {
 	}
 
 	/**
-	 * Adds a an array of directories to the file path determined
+	 * Adds an array of directories to the file path determined
 	 * @param directories
 	 */
 	private void addDirectories(String[] directories){
@@ -439,6 +451,7 @@ public class FileManager {
 	//		return match.find();
 	//	}
 
+	@SuppressWarnings("serial")
 	public class ApplianceNotExistException extends IOException {
 		public ApplianceNotExistException(Appliance appliance){
 			super("Appliance:" + appliance+" does not exist on your external drive.  Be sure to addAppliance before setting" +

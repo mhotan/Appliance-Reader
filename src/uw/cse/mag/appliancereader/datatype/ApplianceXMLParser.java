@@ -88,6 +88,8 @@ public class ApplianceXMLParser {
 	public static final String FEATURE_TAG = "object";
 	public static final String FEATURE_NAME_TAG = "name";
 	public static final String FEATURE_PT_TAG = "pt";
+	public static final String FEATURE_PT_X_TAG = "x";
+	public static final String FEATURE_PT_Y_TAG = "y";
 	public static final String FEATURE_SHAPE_TAG = "polygon";
 	
 	/**
@@ -160,7 +162,7 @@ public class ApplianceXMLParser {
 
 									// If is X coordinate
 									if (ptType == XmlPullParser.START_TAG &&
-											ptTagName != null && ptTagName.equals("x")){
+											ptTagName != null && ptTagName.equals(FEATURE_PT_X_TAG)){
 										if (xpp.next() == XmlPullParser.TEXT){
 											String text = xpp.getText();
 											text = text.replace("\n", "");
@@ -170,7 +172,7 @@ public class ApplianceXMLParser {
 
 									// If is Y coordinate
 									if (ptType == XmlPullParser.START_TAG &&
-											ptTagName != null && ptTagName.equals("y")){
+											ptTagName != null && ptTagName.equals(FEATURE_PT_Y_TAG)){
 										if (xpp.next() == XmlPullParser.TEXT){
 											String text = xpp.getText();
 											text = text.replace("\n", "");
