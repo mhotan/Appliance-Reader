@@ -1,5 +1,7 @@
 package uw.cse.mag.appliancereader.datatype;
 
+import android.os.Bundle;
+
 /**
  * Appliance object that defines a Electrical Appliance that has a digitial display
  * @author mhotan
@@ -7,6 +9,10 @@ package uw.cse.mag.appliancereader.datatype;
 public class Appliance {
 
 	// TODO Finalize Abstract functions and Representation Invariants
+	/**
+	 * This is a key for storing bundles in intents that represent appliances
+	 */
+	public static final String KEY_BUNDLE_APPLIANCE = "KEY_APPLIANCE_BUNDLE";
 	
 	/**
 	 * Database ID for this appliance
@@ -81,6 +87,54 @@ public class Appliance {
 	
 	public String getDirectoryPath(){
 		return mDirectory;
+	}
+	
+	public String toString(){
+		if (mNickName != null)
+			return mNickName;
+		String s = "";
+		if (mMake != null)
+			s += "Make: " + mMake;
+		if (s.length() != 0)
+			s += " ";
+		if (mModel != null)
+			s += "Model: " + mModel;
+		if (s.length() != 0)
+			return s;
+		return "Unknown Appliance: " + mId;
+	}
+	
+	private static final String BUNDLE_ID = "APP_BUN_ID";
+	private static final String BUNDLE_NICKNAME = "APP_BUN_NICKNAME";
+	private static final String BUNDLE_MAKE = "APP_BUN_MAKE";
+	private static final String BUNDLE_MODEL = "APP_BUN_MODEL";
+	private static final String BUNDLE_DIR = "APP_BUN_DIRECTORY";
+	
+	public Bundle toBundle(){
+		Bundle b = new Bundle();
+		b.putLong(BUNDLE_ID, mId);
+		b.putString(BUNDLE_NICKNAME, mNickName);
+		b.putString(BUNDLE_MAKE, mMake);
+		b.putString(BUNDLE_MODEL, mModel);
+		b.putString(BUNDLE_DIR, mDirectory);
+		return b;
+	}
+	
+	/**
+	 * Returns null 
+	 * @param b
+	 * @return null if Bundle doesn't represent appliance, Apliance otherwise 
+	 */
+	public static Appliance toAppliance(Bundle b){
+		long id = b.getLong(BUNDLE_ID, -1);
+		if (id == -1L) return null;
+		Appliance a = new Appliance();
+		a.setId(id);
+		a.setNickName(b.getString(BUNDLE_NICKNAME));
+		a.setMake(b.getString(BUNDLE_MAKE));
+		a.setModel(b.getString(BUNDLE_MODEL));
+		a.setDirectoryPath(b.getString(BUNDLE_DIR));
+		return a;
 	}
 }
 

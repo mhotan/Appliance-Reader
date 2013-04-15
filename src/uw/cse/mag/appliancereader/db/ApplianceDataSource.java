@@ -156,7 +156,7 @@ public class ApplianceDataSource {
 		return a;
 	}
 
-	private class DatabaseNotInitializedException extends Exception {
+	public class DatabaseNotInitializedException extends Exception {
 
 		private static final long serialVersionUID = -6690165807139149242L;
 

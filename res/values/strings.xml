@@ -6,4 +6,6 @@
     <string name="hello_world">Hello world!</string>
     <string name="picture_chooser_descriptor">Choose a picture from Gallery</string>
     <string name="picture_taker_descriptor">Take a Picture</string>
+    <string name="more_appliance_btn">Need more?</string>
+    <string name="speak_content_desc">Speak your request</string>
 </resources>

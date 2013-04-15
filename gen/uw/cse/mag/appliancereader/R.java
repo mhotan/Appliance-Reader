@@ -74,17 +74,21 @@ containing a value of this type.
     }
     public static final class id {
         public static final int any=0x7f050000;
+        public static final int appliance_list=0x7f050007;
         public static final int back=0x7f050001;
         public static final int camera_java_surface_view=0x7f050004;
-        public static final int choose_picture_button=0x7f050006;
+        public static final int choose_picture_button=0x7f050009;
         public static final int display_option_spinner=0x7f050003;
         public static final int front=0x7f050002;
-        public static final int menu_settings=0x7f050007;
-        public static final int take_picture_button=0x7f050005;
+        public static final int imageButton1=0x7f050006;
+        public static final int menu_settings=0x7f05000a;
+        public static final int more_appliance_button=0x7f050005;
+        public static final int take_picture_button=0x7f050008;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
-        public static final int picture_chooser_layout=0x7f030001;
+        public static final int appliance_list_layout=0x7f030001;
+        public static final int picture_chooser_layout=0x7f030002;
     }
     public static final class menu {
         public static final int activity_main=0x7f090000;
@@ -93,8 +97,10 @@ containing a value of this type.
         public static final int app_name=0x7f070000;
         public static final int hello_world=0x7f070002;
         public static final int menu_settings=0x7f070001;
+        public static final int more_appliance_btn=0x7f070005;
         public static final int picture_chooser_descriptor=0x7f070003;
         public static final int picture_taker_descriptor=0x7f070004;
+        public static final int speak_content_desc=0x7f070006;
     }
     public static final class style {
         /** 
