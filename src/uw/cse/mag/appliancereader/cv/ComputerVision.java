@@ -15,6 +15,7 @@ import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.features2d.DMatch;
@@ -716,6 +717,17 @@ public class ComputerVision {
 		return transPoints;
 	}
 	
+	public void drawRect(Rect rect, Mat image) {
+		Core.rectangle(image, rect.br(), rect.tl(), new Scalar(255, 0, 0), 
+				1);
+	}
+	
+	/**
+	 * Draw a line from two points in an image
+	 * @param src Source point of the line
+	 * @param dest Destination point of the line
+	 * @param image Image to which to draw on
+	 */
 	public void drawLine(Point src, Point dest, Mat image){
 		Scalar red = new Scalar(255,0,0);
 		Core.line(image, src,dest, red);

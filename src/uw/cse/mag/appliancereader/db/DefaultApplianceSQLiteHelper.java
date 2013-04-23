@@ -25,11 +25,7 @@ public class DefaultApplianceSQLiteHelper extends ApplianceSQLiteHelper {
 		TABLE_NAME = "defaultappliances";
 	}
 	
-	@Override
-	public void onCreate(SQLiteDatabase database) {
-		Log.d(TAG, "Creating a new database");
-		database.execSQL(getSQLDataBaseCreate());
-	}
+	
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {

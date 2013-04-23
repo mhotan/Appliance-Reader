@@ -25,14 +25,20 @@ import org.opencv.core.Rect;
  */
 public abstract class ApplianceFeatures implements Iterable<ApplianceFeature> {
 
+	 
+	
 	private static final Logger log = Logger.getLogger(ApplianceFeatures.class.getSimpleName());
+	
 	
 	/**
 	 * Hidden data abstraction for containing data
 	 * Features are only identified by 
 	 */
-	private final Map<String, ApplianceFeature> mFeatures = 
-			new HashMap<String, ApplianceFeature>();
+	private final Map<String, ApplianceFeature> mFeatures;
+		
+	public ApplianceFeatures(){
+		mFeatures = new HashMap<String, ApplianceFeature>();
+	}
 	
 	/**
 	 * Adds a new feature to the appliance image set
@@ -86,6 +92,10 @@ public abstract class ApplianceFeatures implements Iterable<ApplianceFeature> {
 		return appfeature.getPoints();
 	}
 	
+	public boolean isEmpty(){
+		return mFeatures.isEmpty();
+	}
+	
 	@Override
 	public String toString(){
 		StringBuffer buf = new StringBuffer();
@@ -101,7 +111,7 @@ public abstract class ApplianceFeatures implements Iterable<ApplianceFeature> {
 	 * Scales down all the features
 	 * @param scaleFactor int factor to scale points down by
 	 */
-	public void scaleDownFeatures(int scaleFactor) {
+	public void scaleDownFeatures(float scaleFactor) {
 		Collection<ApplianceFeature> AppFeatures = mFeatures.values();
 		for (ApplianceFeature a: AppFeatures)
 			a.scaleFeature(1.0 / scaleFactor); // Scale down

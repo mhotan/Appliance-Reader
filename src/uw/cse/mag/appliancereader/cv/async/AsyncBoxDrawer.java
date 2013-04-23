@@ -8,11 +8,14 @@ import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 
 import uw.cse.mag.appliancereader.cv.CVSingletons;
 import uw.cse.mag.appliancereader.cv.ComputerVision;
+import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -25,7 +28,7 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 
 	private static final String TAG = AsyncBoxDrawer.class.getSimpleName();
 
-	private final List<List<Point>> mfeat2Draw;
+	private final ApplianceFeatures mFeaturesToDraw;
 	private final List<WarpedPointListener> mSecListeners;
 
 	/**
@@ -99,11 +102,13 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 	 * @param savedFrame 
 	 * @param features list of features to be drawn
 	 */
-	public AsyncBoxDrawer(ComputerVision cv, ImageInformation refImg, List<List<Point>> displayFeatures) {
+	public AsyncBoxDrawer(ComputerVision cv, ImageInformation refImg, ApplianceFeatures feats) {
 		if (cv == null || !cv.isInitialized())
 			throw new RuntimeException("Illegal Computer Vision: " + cv);
 		if (refImg == null)
-			throw new RuntimeException("");
+			throw new RuntimeException("Reference image cannot be null");
+		
+		// Initialize the computer vision tools
 		mCV = cv;
 		mFeatureDetector = CVSingletons.getFeatureDetector();
 		mDescriptorExtractor = CVSingletons.getDescriptorExtractor();
@@ -113,15 +118,10 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 		mRefKeyPts = refImg.mFeatureKeyPts;
 		mRefDescriptors = refImg.mFeatureDescriptors;
 	
-		mfeat2Draw = new ArrayList<List<Point>>();
-		for (List<Point> feature: displayFeatures){
-			List<Point> nlst = new ArrayList<Point>();
-			for (Point p: feature){
-				nlst.add(p.clone());
-			}
-			mfeat2Draw.add(nlst);
-		}
+		// Assign the feature to draw
+		mFeaturesToDraw = feats;
 		
+		// Create a list of listeners
 		mSecListeners = new ArrayList<AsyncBoxDrawer.WarpedPointListener>();
 	}
 
@@ -145,6 +145,7 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 	@Override
 	protected Mat doInBackground(Mat... params) {
 		// Given a new target image
+		// This is an image from a different perspective of the reference image
 		mTgtImg = params[0];
 
 		// Compute target key points
@@ -172,18 +173,18 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 		mHomography = mCV.findHomography( ref2f, tgt2f, 
 				CVSingletons.getHomographyMethod(), CVSingletons.getRansacThreshold());
 
-		List<List<Point>> warpedFeatures = new ArrayList<List<Point>>(mfeat2Draw.size());
-		for (List<Point> l: mfeat2Draw)
-			warpedFeatures.add(mCV.getWarpedPoints(l, mHomography));
-	
-		Mat toDraw = mTgtImg.clone();
-		for (List<Point> l: warpedFeatures){
-			for (int i = 0; i < l.size()-1; ++i)
-				mCV.drawLine(l.get(i), l.get(i+1), toDraw);
-			mCV.drawLine(l.get(l.size()-1), l.get(0), toDraw);
+		// Transform the Target image to resemble the reference image 
+		// This might not be perfect or even close
+		// TODO Check if transformation is correct
+		Mat warped = mCV.getWarpedImage(mTgtImg, mHomography, 
+				new Size(mTgtImg.width(), mTgtImg.height()), false);
+		
+		// Iterate through every ApplianceFeature
+		for (Rect r: mFeaturesToDraw.getFeatureBoxes()){
+			mCV.drawRect(r, warped);
 		}
-
-		return toDraw;
+		
+		return warped;
 	}
 	
 	@Override

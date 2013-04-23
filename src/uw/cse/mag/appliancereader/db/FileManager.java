@@ -13,6 +13,7 @@ import org.xmlpull.v1.XmlSerializer;
 
 import uw.cse.mag.appliancereader.datatype.Appliance;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeature;
+import uw.cse.mag.appliancereader.datatype.ApplianceFeatureFactory;
 import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
 import uw.cse.mag.appliancereader.datatype.ApplianceXMLParser;
 import uw.cse.mag.appliancereader.util.ImageIO;
@@ -334,10 +335,9 @@ class FileManager {
 		String xmlPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + XML_FEATURES_FILE;
 		ApplianceFeatures features = null;
 		try {
-			features = ApplianceXMLParser.getApplianceFeatures(xmlPath);
+			features = ApplianceFeatureFactory.getApplianceFeatures(xmlPath);
 		} catch (IOException e) {
 			Log.e(TAG, "Unable to load file features at:" + xmlPath);
-			e.printStackTrace();
 		}
 		return features;
 	}
@@ -426,30 +426,4 @@ class FileManager {
 			dir.delete();
 		}
 	}
-
-	//	private boolean privIsValidName(String name){
-	//		if (name == null) return false;
-	//		Matcher match = mNonAlphaNumeric.matcher(name);
-	//		return match.find();
-	//	}
-
-	@SuppressWarnings("serial")
-	public class ApplianceNotExistException extends IOException {
-		public ApplianceNotExistException(Appliance appliance){
-			super("Appliance:" + appliance+" does not exist on your external drive.  Be sure to addAppliance before setting" +
-					"reference image");
-		}
-	}
-	//
-	//	public class NameFormatException extends Exception {
-	//
-	//		/**
-	//		 * Serial ID
-	//		 */
-	//		private static final long serialVersionUID = -8561650210050752923L;
-	//
-	//		public NameFormatException(String name){
-	//			super("Name inludes non alphanumeric, \"-\" or _  characters: " + name);
-	//		}
-	//	}
 }

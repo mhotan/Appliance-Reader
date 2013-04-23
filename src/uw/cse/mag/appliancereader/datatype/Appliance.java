@@ -2,6 +2,7 @@ package uw.cse.mag.appliancereader.datatype;
 
 import uw.cse.mag.appliancereader.util.Util;
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * Appliance object that defines a Electrical Appliance that has a digitial display
@@ -9,6 +10,8 @@ import android.os.Bundle;
  */
 public class Appliance {
 
+	private static final String TAG = Appliance.class.getSimpleName();
+	
 	// TODO Finalize Abstract functions and Representation Invariants
 	/**
 	 * This is a key for storing bundles in intents that represent appliances
@@ -37,6 +40,9 @@ public class Appliance {
 	 */
 	private String mModel;
 	
+	/**
+	 * Type of appliance
+	 */
 	private String mType;
 	
 	/**
@@ -44,12 +50,17 @@ public class Appliance {
 	 */
 	private String mDirectory;
 	
+	/**
+	 * Directory that stores appliance features
+	 */
+	private ApplianceFeatures mFeatures;
+	
 	public Appliance(){
 		mId = -1;
 	}
 	
 	/*
-	 * Setters
+	 * Setters or modifiers
 	 * */
 	
 	public void setId(long id){
@@ -72,8 +83,25 @@ public class Appliance {
 		this.mType = type;
 	}
 	
+	public void setApplianceFeatures(ApplianceFeatures af){
+		this.mFeatures = af;
+	}
+	
 	public void setDirectoryPath(String directoryPath){
 		this.mDirectory = directoryPath;
+	}
+	
+	/**
+	 * Scales down all the feature point by a particular value
+	 * Scales down all the features
+	 * @param scaleFactor int factor to scale points down by
+	 */
+	public void scaleDownFeatures(float scaleFactor) {
+		if (mFeatures == null) {
+			Log.w(TAG, "No features found to scale");
+		} else {
+			mFeatures.scaleDownFeatures(scaleFactor);
+		}
 	}
 	
 	/*
@@ -98,6 +126,16 @@ public class Appliance {
 	
 	public String getType(){
 		return mType;
+	}
+	
+	public boolean hasApplianceFeatures(){
+		if (mFeatures == null)
+			return false;
+		return !mFeatures.isEmpty();
+	}
+	
+	public ApplianceFeatures getApplianceFeatures(){
+		return mFeatures;
 	}
 	
 	public String getDirectoryPath(){

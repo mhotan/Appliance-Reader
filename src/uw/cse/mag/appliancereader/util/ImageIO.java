@@ -19,6 +19,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import uw.cse.mag.appliancereader.imgproc.Size;
 import android.content.ContentResolver;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -115,6 +116,13 @@ public class ImageIO {
 		return new Size(bmpOptions.outWidth, bmpOptions.outHeight);
 	}
 
+	public static Size getSizeOfImage(Resources res, int resid){
+		BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
+		bmpOptions.inJustDecodeBounds = true;
+		BitmapFactory.decodeResource(res, resid, bmpOptions);
+		return new Size(bmpOptions.outWidth, bmpOptions.outHeight);
+	}
+
 	public static int getOrientationOfImage(ContentResolver resolver, Uri uri){
 		Size current = getSizeOfImage(resolver, uri);
 		if (current.width > current.height)
@@ -185,6 +193,30 @@ public class ImageIO {
 	}
 
 	/**
+	 * Load an image from resource ID.
+	 * Relative path should be determined by the context of the caller
+	 * generally it is safe to use absolute paths
+	 * @param filePath Path to the image
+	 * @param size Desired size of the image to be returned
+	 * @return Image at desired size or full size
+	 */
+	public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+	        int reqWidth, int reqHeight) {
+
+	    // First decode with inJustDecodeBounds=true to check dimensions
+	    final BitmapFactory.Options options = new BitmapFactory.Options();
+	    options.inJustDecodeBounds = true;
+	    BitmapFactory.decodeResource(res, resId, options);
+
+	    // Calculate inSampleSize
+	    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+	    // Decode bitmap with inSampleSize set
+	    options.inJustDecodeBounds = false;
+	    return BitmapFactory.decodeResource(res, resId, options);
+	}
+
+	/**
 	 * Load an image from the designated relative or complete path.
 	 * Relative path should be determined by the context of the caller
 	 * generally it is safe to use absolute paths
@@ -197,7 +229,7 @@ public class ImageIO {
 			throw new IllegalArgumentException("Null Filepath for loading");
 
 		if (size != null && size.width > 0 && size.height > 0) {
-			// 
+			// Obtain the original size of the bitmap image before scaling
 			BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
 			bmpOptions.inJustDecodeBounds = true;
 			BitmapFactory.decodeFile(filePath, bmpOptions);
@@ -208,9 +240,9 @@ public class ImageIO {
 			int sampleSize = 1;
 			{
 				//use either width or height
-				if ((currWidth>currHeight))
+				if ((currWidth > currHeight)) // landscape
 					sampleSize = Math.round((float)currHeight/(float)size.height);
-				else
+				else // portrait
 					sampleSize = Math.round((float)currWidth/(float)size.width);
 			}
 
@@ -222,4 +254,26 @@ public class ImageIO {
 			return BitmapFactory.decodeFile(filePath);
 		}
 	}
+	
+	public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+    }
+
+    return inSampleSize;
+}
 }

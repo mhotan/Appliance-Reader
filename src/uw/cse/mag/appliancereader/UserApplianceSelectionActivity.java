@@ -7,12 +7,13 @@ import java.util.logging.Logger;
 import uw.cse.mag.appliancereader.camera.BaseImageTaker;
 import uw.cse.mag.appliancereader.camera.ExternalApplication;
 import uw.cse.mag.appliancereader.datatype.Appliance;
+import uw.cse.mag.appliancereader.db.ApplianceDBAdapter;
 import uw.cse.mag.appliancereader.db.ApplianceDataSource;
 import uw.cse.mag.appliancereader.db.ApplianceDataSource.DatabaseNotInitializedException;
-import uw.cse.mag.appliancereader.db.UserAppliancesSQLiteHelper;
+import uw.cse.mag.appliancereader.db.ApplianceNotExistException;
 import uw.cse.mag.appliancereader.util.ImageIO;
 import uw.cse.mag.appliancereader.util.Util;
-import android.app.ListActivity;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -28,13 +29,13 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class UserApplianceSelectionActivity extends ListActivity implements OnLongClickListener {
+public class UserApplianceSelectionActivity extends Activity implements OnLongClickListener {
 
 	private static final String TAG = UserApplianceSelectionActivity.class.getSimpleName();
 	private static final Logger log = Logger.getLogger(UserApplianceSelectionActivity.class.getSimpleName()); 
 	private static final int REQUEST_CODE_DEFAULT_APPLIANCES = 0x1;
-	private static final int REQUESTCODE_REFERENCE_IMG = REQUEST_CODE_DEFAULT_APPLIANCES + 1;
-	private ApplianceDataSource datasource;
+	private static final int REQUEST_CODE_REFER_DEFAULT_IMAGES = REQUEST_CODE_DEFAULT_APPLIANCES + 1;
+	private ApplianceDataSource mUserDatasource;
 
 	//UI elements
 	private Button mGetMoreButton;
@@ -54,13 +55,12 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 		mListView = (ListView)findViewById(R.id.appliance_list);
 
 		// Create connection to database
-		UserAppliancesSQLiteHelper helper = new UserAppliancesSQLiteHelper(this);
-		datasource = new ApplianceDataSource(helper);
-		datasource.open();
+		mUserDatasource = new ApplianceDataSource(this, ApplianceDBAdapter.USER_TABLE);
+		mUserDatasource.open();
 
 		List<Appliance> values = null;
 		try {
-			values = datasource.getAllAppliances();
+			values = mUserDatasource.getAllAppliances();
 		} catch (DatabaseNotInitializedException e) {
 			log.log(Level.SEVERE, "Unable to access the data base for all appliances.  The current" +
 					"implementation does not properly open the database");
@@ -68,7 +68,7 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 
 		ArrayAdapter<Appliance> adapter = new ArrayAdapter<Appliance>(
 				this, android.R.layout.simple_expandable_list_item_1, values);
-		setListAdapter(adapter);
+		mListView.setAdapter(adapter);
 
 		mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
 
@@ -80,7 +80,7 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 
 				if (appliance == mTakePicture) {
 					// User wants to take a picture
-					getImageForReference(REQUESTCODE_REFERENCE_IMG);
+					getImageForReference(REQUEST_CODE_REFER_DEFAULT_IMAGES);
 				} else {
 					int result = RESULT_OK;
 					Bundle b = null;
@@ -109,13 +109,13 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 
 	@Override
 	protected void onResume() {
-		datasource.open();
+		mUserDatasource.open();
 		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
-		datasource.close();
+		mUserDatasource.close();
 		super.onPause();
 	}
 
@@ -124,20 +124,31 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 		super.onActivityResult(requestCode, resultCode, data);
 
 		if (resultCode == RESULT_OK) {
+			Bitmap img = null;
 			try {
 				switch (requestCode) {
 				case REQUEST_CODE_DEFAULT_APPLIANCES : 
 
 					Bundle b = data.getBundleExtra(Appliance.KEY_BUNDLE_APPLIANCE);
 					Appliance app = Appliance.toAppliance(b);
-
-					datasource.createAppliance(app);
+					
+					ApplianceDataSource defAppSrc = new ApplianceDataSource(this, ApplianceDBAdapter.DEFAULT_TABLE);
+					defAppSrc.open();
+					try {
+						img = defAppSrc.getReferenceImage(app, null);
+					} catch (ApplianceNotExistException e) {
+						Log.e(TAG, "User Appliance selection. Unable to load reference image");
+					}
+					defAppSrc.close();
+					
+					// Save in user database
+					mUserDatasource.createAppliance(app, img);
 					break;
-				case REQUESTCODE_REFERENCE_IMG: 
+				case REQUEST_CODE_REFER_DEFAULT_IMAGES: 
 					// Add more cases
 
 					// New appliance to store
-					Bitmap img = processNewAppliance(data);
+					img = processNewAppliance(data);
 
 					// TODO Ask user for name
 					String timeStamp = Util.getTimeStamp();
@@ -147,8 +158,11 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 					Appliance a = new Appliance();
 					a.setNickName(name);
 					// Save the reference image
-					datasource.createAppliance(a);
-					datasource.saveApplianceReferenceImage(a, img);
+					mUserDatasource.createAppliance(a, img);
+//					datasource.saveApplianceReferenceImage(a, img);
+					
+					// Store Appliance result in Bundle
+					data.putExtra(Appliance.KEY_BUNDLE_APPLIANCE, a.toBundle());
 				}
 				// Always executes
 				setResult(resultCode, data);
@@ -160,6 +174,11 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 
 	}
 
+	/**
+	 * Process a new Bitmap image from an intent storing an appliance
+	 * @param data
+	 * @return
+	 */
 	private Bitmap processNewAppliance(Intent data) {
 		//The user is given two option upon return
 		// either take an image or choose an existing images
@@ -223,7 +242,7 @@ public class UserApplianceSelectionActivity extends ListActivity implements OnLo
 		//		Log.d(TAG,"Calling camera intent"); 
 		Intent i = new Intent(this, ExternalApplication.class);
 		i.putExtra(ExternalApplication.EXTRA_SPECIFIC_REQUEST_TYPE, extraREquest);
-		startActivityForResult(i, REQUESTCODE_REFERENCE_IMG);
+		startActivityForResult(i, REQUEST_CODE_REFER_DEFAULT_IMAGES);
 	} 
 
 	private static final String TAKE_PICTURE = "Take a picture of a new appliance?";
