@@ -1,4 +1,4 @@
-package uw.cse.mag.appliancereader.datatype;
+package uw.cse.mag.appliancereader.db.datatype;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -66,11 +66,17 @@ public class ApplianceFeatureFactory {
 		try {
 			XmlPullParser xpp = XmlPullParserFactory.newInstance().newPullParser();
 			xpp.setInput(new StringReader(xmlString));
-			ApplianceFeatures features = new StringApplianceFeatures(xmlString);
-			ApplianceXMLParser.parse(features, xpp);
+//			ApplianceFeatures features = new StringApplianceFeatures(xmlString);
+//			ApplianceXMLParser.parse(features, xpp);
+//			
+			ApplianceFeatures features = ApplianceXMLParser.parse(xpp);
+			
 			return features;
 		} catch (XmlPullParserException e) {
 			Log.e(TAG, "Unable to XML parser input string " + xmlString + "!" );
+			return null;
+		} catch (IOException e) {
+			Log.e(TAG, "Unable to Parse XML: " + xmlString);
 			return null;
 		}
 	}

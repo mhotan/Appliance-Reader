@@ -1,9 +1,11 @@
-package uw.cse.appliance.database.test;
+package uw.cse.mag.appliancereader.db;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import uw.cse.mag.appliancereader.db.datatype.Appliance;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,19 +14,19 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.util.Log;
 
-public class ApplianceDataSource {
-
-	private static final String TAG = ApplianceDataSource.class.getSimpleName();
+public class UserApplianceDataSource {
+	private static final String TAG = UserApplianceDataSource.class.getSimpleName();
 
 	private SQLiteDatabase database;
-	private ApplianceSQlliteHelper dbHelper;
+	private UserApplianceHelper dbHelper;
+	private FileManager filemanager;
 	private String[] allColumns = { // These are maintained in the same order 
-			ApplianceSQlliteHelper.COLUMN_ID,
-			ApplianceSQlliteHelper.COLUMN_NICKNAME,
-			ApplianceSQlliteHelper.COLUMN_DIRECTORY,
-			ApplianceSQlliteHelper.COLUMN_MAKE,
-			ApplianceSQlliteHelper.COLUMN_MODEL,
-			ApplianceSQlliteHelper.COLUMN_TYPE
+			UserApplianceHelper.COLUMN_ID,
+			UserApplianceHelper.COLUMN_NICKNAME,
+			UserApplianceHelper.COLUMN_DIRECTORY,
+			UserApplianceHelper.COLUMN_MAKE,
+			UserApplianceHelper.COLUMN_MODEL,
+			UserApplianceHelper.COLUMN_TYPE
 	};
 
 	/**
@@ -32,8 +34,9 @@ public class ApplianceDataSource {
 	 * applications database
 	 * @param context
 	 */
-	public ApplianceDataSource(Context context) {
-		dbHelper = new ApplianceSQlliteHelper(context);
+	public UserApplianceDataSource(Context context) {
+		dbHelper = new UserApplianceHelper(context);
+		filemanager = FileManager.getInstance();
 	}
 
 	public void open() throws SQLException {
@@ -51,18 +54,18 @@ public class ApplianceDataSource {
 		File f = new File(dir);
 		if (!f.isDirectory()) 
 			throw new IllegalArgumentException("Path leads to a non directory");
-		
-		ContentValues values = new ContentValues();
-		values.put(ApplianceSQlliteHelper.COLUMN_NICKNAME, nickName);
-		values.put(ApplianceSQlliteHelper.COLUMN_DIRECTORY, dir);
-		values.put(ApplianceSQlliteHelper.COLUMN_MAKE, make);
-		values.put(ApplianceSQlliteHelper.COLUMN_MODEL, model);
-		values.put(ApplianceSQlliteHelper.COLUMN_TYPE, type);
 
-		long insertId = database.insert(ApplianceSQlliteHelper.TABLE_APPLIANCE,
+		ContentValues values = new ContentValues();
+		values.put(UserApplianceHelper.COLUMN_NICKNAME, nickName);
+		values.put(UserApplianceHelper.COLUMN_DIRECTORY, dir);
+		values.put(UserApplianceHelper.COLUMN_MAKE, make);
+		values.put(UserApplianceHelper.COLUMN_MODEL, model);
+		values.put(UserApplianceHelper.COLUMN_TYPE, type);
+
+		long insertId = database.insert(UserApplianceHelper.TABLE_APPLIANCE,
 				null, values);
-		Cursor cursor = database.query(ApplianceSQlliteHelper.TABLE_APPLIANCE,
-				allColumns, ApplianceSQlliteHelper.COLUMN_ID + " = " + insertId, null,
+		Cursor cursor = database.query(UserApplianceHelper.TABLE_APPLIANCE,
+				allColumns, UserApplianceHelper.COLUMN_ID + " = " + insertId, null,
 				null, null, null);
 		cursor.moveToFirst();
 		Appliance newappliance = cursorToAppliance(cursor);
@@ -94,52 +97,44 @@ public class ApplianceDataSource {
 			throw new IllegalArgumentException("Illegal name state Nickname: " + nickName + 
 					" Make: " + make + " Model: " + model);
 
-		// TODO Undo Bitmap
-		//		if (b == null)
-		//			throw new IllegalArgumentException("Bitmap argument cannot be null");
+		if (b == null)
+			throw new IllegalArgumentException("Bitmap argument cannot be null");
 
-		// TODO save the image and get the path where the home directory is
+		Appliance a = new Appliance();
+		a.setNickName(nickName);
+		a.setMake(make);
+		a.setModel(model);
+		a.setType(type);
+
 		// FileManager save appliance with Bitmap and Appliance Name
-		// DEBUG  
-		String directoryPath = "ddddddddddddddddddddddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd" +
-				"dddddddddddddddddddsddddddddddddddddddddd";
+		// DEBUG 
+		String directoryPath;
+		try {
+			directoryPath = filemanager.addAppliance(a);
+			a.setDirectoryPath(directoryPath);
+			filemanager.setReferenceImage(a, b);
+		} catch (IOException e) {
+			Log.e(TAG, "Unable to create directory for appliance named: " + a);
+			return null;
+		} catch (ApplianceNotExistException e) {
+			Log.e(TAG, "Unable correctly store appliance: " + a);
+			return null;
+		}
 
-		ContentValues values = new ContentValues();
-		values.put(ApplianceSQlliteHelper.COLUMN_NICKNAME, nickName);
-		values.put(ApplianceSQlliteHelper.COLUMN_DIRECTORY, directoryPath);
-		values.put(ApplianceSQlliteHelper.COLUMN_MAKE, make);
-		values.put(ApplianceSQlliteHelper.COLUMN_MODEL, model);
-		values.put(ApplianceSQlliteHelper.COLUMN_TYPE, type);
-
-		long insertId = database.insert(ApplianceSQlliteHelper.TABLE_APPLIANCE,
-				null, values);
-		Cursor cursor = database.query(ApplianceSQlliteHelper.TABLE_APPLIANCE,
-				allColumns, ApplianceSQlliteHelper.COLUMN_ID + " = " + insertId, null,
-				null, null, null);
-		cursor.moveToFirst();
-		Appliance newappliance = cursorToAppliance(cursor);
-		cursor.close();
-		return newappliance;
+		return createAppliance(a.getNickname(), a.getMake(), a.getModel(), a.getType(), directoryPath);
 	}
 
 	public void deleteAppliance(Appliance appliance) {
 		long id = appliance.getID();
 		Log.i(TAG, "Appliance deleted with id: " + id);
-		database.delete(ApplianceSQlliteHelper.TABLE_APPLIANCE,
-				ApplianceSQlliteHelper.COLUMN_ID + " = " + id, null);
+		database.delete(UserApplianceHelper.TABLE_APPLIANCE,
+				UserApplianceHelper.COLUMN_ID + " = " + id, null);
 	}
 
 	public List<Appliance> getAllAppliances() {
 		List<Appliance> comments = new ArrayList<Appliance>();
 
-		Cursor cursor = database.query(ApplianceSQlliteHelper.TABLE_APPLIANCE,
+		Cursor cursor = database.query(UserApplianceHelper.TABLE_APPLIANCE,
 				allColumns, null, null, null, null, null);
 
 		cursor.moveToFirst();

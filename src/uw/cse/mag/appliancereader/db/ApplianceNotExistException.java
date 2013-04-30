@@ -1,6 +1,6 @@
 package uw.cse.mag.appliancereader.db;
 
-import uw.cse.mag.appliancereader.datatype.Appliance;
+import uw.cse.mag.appliancereader.db.datatype.Appliance;
 
 public class ApplianceNotExistException extends Exception {
 	

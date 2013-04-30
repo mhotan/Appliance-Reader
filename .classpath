@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="uw/cse/mag/appliancereader/dataset/DisplayFeature.java|uw/cse/mag/appliancereader/dataset/TestFeature.java|uw/cse/mag/appliancereader/datatype/XMLTestImageSet.java|uw/cse/mag/appliancereader/datatype/TestFeature.java|uw/cse/mag/appliancereader/db/DefaultApplianceSQLiteHelper.java|uw/cse/mag/appliancereader/db/UserAppliancesSQLiteHelper.java" kind="src" path="src"/>
+	<classpathentry excluding="uw/cse/mag/appliancereader/dataset/DisplayFeature.java|uw/cse/mag/appliancereader/dataset/TestFeature.java|uw/cse/mag/appliancereader/datatype/XMLTestImageSet.java|uw/cse/mag/appliancereader/datatype/TestFeature.java|uw/cse/mag/appliancereader/db/DefaultApplianceSQLiteHelper.java|uw/cse/mag/appliancereader/db/UserAppliancesSQLiteHelper.java|uw/cse/mag/appliancereader/db/UserApplianceAdapter.java|uw/cse/mag/appliancereader/db/ApplianceDBAdapter.java|uw/cse/mag/appliancereader/db/ApplianceDataSource.java|uw/cse/mag/appliancereader/db/datatype/TestFeature.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>

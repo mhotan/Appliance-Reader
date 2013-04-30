@@ -17,12 +17,10 @@ import uw.cse.mag.appliancereader.cv.async.AsyncFeatureDrawer.OnFeaturesDrawnLis
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper;
 import uw.cse.mag.appliancereader.cv.async.AsyncImageWarper.ImageWarpListener;
 import uw.cse.mag.appliancereader.cv.async.ImageInformation;
-import uw.cse.mag.appliancereader.datatype.Appliance;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeatureFactory;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
-import uw.cse.mag.appliancereader.db.ApplianceDBAdapter;
-import uw.cse.mag.appliancereader.db.ApplianceDataSource;
 import uw.cse.mag.appliancereader.db.ApplianceNotExistException;
+import uw.cse.mag.appliancereader.db.datatype.Appliance;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeatureFactory;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeatures;
 import uw.cse.mag.appliancereader.imgproc.ImageConversion;
 import uw.cse.mag.appliancereader.imgproc.Size;
 import android.app.Activity;
@@ -62,6 +60,8 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 	private static final int SELECT_APPLIANCE = 0x1;
 
+	private static final String SAVED_APPLIANCE = MainActivity.class.getName() + "_SAVED_APPLIANCE";
+
 	/**
 	 * This the a main parameter mostly used for debugging to look at
 	 * different outputs of opencv calls of the same appliance
@@ -69,7 +69,9 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	private DISPLAY_OPTION mCurrentOption;
 
 	/**
-	 * 
+	 * This spinner is including for debugging process
+	 * This allows the user to see different feature 
+	 * outputs of the selected appliance
 	 */
 	private Spinner mDisplayOptSpinner;
 
@@ -91,17 +93,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	private Appliance mCurrentAppliance;
 
 	/**
-	 * Data source to retrieve 
-	 */
-	private ApplianceDataSource mUsersDataSource;
-	
-	/**
-	 * This is only to initialize or update database tables
-	 * 
-	 */
-	private ApplianceDBAdapter mDatabaseAdapter;
-
-	/**
 	 * Asynchronous calculators
 	 * Each one of these does some kind of asynchronous 
 	 * homography calculation and returns a matrix to present 
@@ -113,8 +104,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	private AsyncImageWarper mAsyncImageWarper;
 
 	private Mat mRgba;
-
-	private static final String DEFAULT_APPLIANCE = "_UNKNOWN_";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -141,33 +130,13 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 		// Create a computer vision instance to handle all the procedures
 		mCV = new ComputerVision(this.getApplicationContext(), this, this);
-
-		
-		mDatabaseAdapter = new ApplianceDBAdapter(this);
-		mDatabaseAdapter.open();
-		mDatabaseAdapter.close();
-		// Initialize the data source to retrieve the appliance in question
-		mUsersDataSource = new ApplianceDataSource(this, ApplianceDBAdapter.USER_TABLE);
 	}
 
-	@Override
-	public void onItemSelected(AdapterView<?> spinner, View arg1, int pos,
-			long arg3) {
-		if (spinner == mDisplayOptSpinner){
-			mCurrentOption = mDisplayOptions[pos];
-		}
-	}
-
-	@Override
-	public void onNothingSelected(AdapterView<?> spinner) {
-	}
 
 
 	@Override
 	public void onPause()
 	{
-		mUsersDataSource.close();
-
 		if (mOpenCvCameraView != null)
 			mOpenCvCameraView.disableView();
 		super.onPause();
@@ -176,17 +145,18 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	@Override
 	public void onResume()
 	{
-		mCurrentAppliance = new AppliancePeferenceSharer(this).getLastAppliance();
+		// Check if we havent just returned from Selecting an appliance
 		if (mCurrentAppliance == null) {
-			// Unable to find last appliance
-			Intent i = new Intent(this, UserApplianceSelectionActivity.class);
-			startActivityForResult(i, SELECT_APPLIANCE);
-		} else {
-			Log.i(TAG, "Past Appliance found!");
+			// Attempt to recover last appliance used appliance
+			mCurrentAppliance = new AppliancePeferenceSharer(this).getLastAppliance();
+			if (mCurrentAppliance == null) {
+				// Unable to find last appliance
+				Intent i = new Intent(this, UserApplianceSelectionActivity.class);
+				startActivityForResult(i, SELECT_APPLIANCE);
+			} else {
+				Log.i(TAG, "Past Appliance found!");
+			}
 		}
-		
-		// Open the data base for use
-		mUsersDataSource.open();
 
 		super.onResume();
 
@@ -206,7 +176,7 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		super.onDestroy();
 		if (mOpenCvCameraView != null)
 			mOpenCvCameraView.disableView(); 
-		mDatabaseAdapter.close();
+		//		mDatabaseAdapter.close();
 	}
 
 
@@ -215,6 +185,28 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		super.onSaveInstanceState(savedInstanceState);
+		// Save UI state changes to the savedInstanceState.
+		// This bundle will be passed to onCreate if the process is
+		// killed and restarted.
+		if (mCurrentAppliance != null)
+			savedInstanceState.putBundle(SAVED_APPLIANCE, mCurrentAppliance.toBundle());
+	}
+
+	@Override
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		// Restore UI state from the savedInstanceState.
+		// This bundle has also been passed to onCreate.
+		Bundle a = savedInstanceState.getBundle(SAVED_APPLIANCE);
+		if (a != null){
+			mCurrentAppliance = Appliance.toAppliance(a);
+		} else
+			Log.w(TAG, "Unable to load previously used appliance");
 	}
 
 	//////////////////////////////////////////////////////
@@ -240,8 +232,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	//// CameraViewBase callback methods for interpreting 
 	//////////////////////////////////////////////////////
 
-
-
 	@Override
 	public void onCameraViewStarted(int w, int h) {
 		// TODO adjust the reference image with respect to the width and height that the camera is starting at
@@ -252,16 +242,19 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		// get camera orientaion
 		// This orientation check is because OPENCV for android cant handle orientation changes
 		// IE think everything is in landscape
-		int actualOrientation = getResources().getConfiguration().orientation;
-		if (actualOrientation == Configuration.ORIENTATION_PORTRAIT) {
-			int temp = w;
-			w = h;
-			h = temp;
-		} 
+//		int actualOrientation = getResources().getConfiguration().orientation;
+//		if (actualOrientation == Configuration.ORIENTATION_PORTRAIT) {
+//			int temp = w;
+//			w = h;
+//			h = temp;
+//		} 
 
 		Size actualDimension = new Size(w,h);
+
+		// Create a place holder for this application
 		// TODO check whether these dimensions are correct
 		mRgba = new Mat(actualDimension.height, actualDimension.width, CvType.CV_8UC4);
+		Log.d(TAG, "Initial camera frame width: " + mRgba.width() + " height: " + mRgba.height());
 
 		//	Reference the initial Appliance 
 		//  Grab its reference image
@@ -270,83 +263,51 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 
 			// Change button of the appliance to show that no appliance is chosen
 			// TODO
-
 			return;
 		}
 		// Assert we have a current appliance
 
-		// Get image orientation
+		// If the Reference Image 
 		int refOrientation;
-		try {
-			refOrientation = mUsersDataSource.getRefimageOrientation(mCurrentAppliance);
-			if (refOrientation == actualOrientation){
-				// Obtain the original size of the image
-				Size originaSize = mUsersDataSource.getSizeOfRefImage(mCurrentAppliance);
-				// Obtain the image but scaled to the factor that matches the screen
-				Bitmap b = mUsersDataSource.getReferenceImage(mCurrentAppliance, actualDimension);
-				// Scale down the features of this appliance if it exists
-				float scaleFactor = originaSize.width / b.getWidth();
-				mCurrentAppliance.scaleDownFeatures(scaleFactor);
+		refOrientation = mCurrentAppliance.getRefimageOrientation();
+//		if (refOrientation == actualOrientation){
+			// Obtain the original size of the image
+			Size originaSize = mCurrentAppliance.getSizeOfRefImage();
+			Log.d(TAG, "Original image width: " + originaSize.width + " height: " + originaSize.height);
 
-				// Convert our scaled image to a Mat
-				Mat mRefImg = ImageConversion.bitmapToMat(b);
+			// Obtain the image but scaled to the factor that matches the screen
+			Bitmap b = mCurrentAppliance.getReferenceImage(actualDimension);
+			// Scale down the features of this appliance if it exists
+			float scaleFactor = originaSize.width / b.getWidth();
+			mCurrentAppliance.scaleDownFeatures(scaleFactor);
+			Log.d(TAG, "Scaled image width: " + b.getWidth() + " height: " + b.getHeight());
 
-				// Initialize the feature extraction for the reference Image
-				mAsyncFD = new AsyncFeatureDetector(mCV);
-				mAsyncFD.setFeatureDetectionListener(this);
-				mAsyncFD.execute(mRefImg);
+			// Convert our scaled image to a Mat
+			Mat mRefImg = ImageConversion.bitmapToMat(b);
+			Log.d(TAG, "Scaled and Converted image width: " + b.getWidth() + " height: " + b.getHeight());
 
-				b.recycle(); // Free up the memory as soon as possible
-			}
-		} catch (ApplianceNotExistException e) {
-			Log.e(TAG, "Failed to retireve Appliance image and features when camera started");
-		}
+			// Initialize the feature extraction for the reference Image
+			mAsyncFD = new AsyncFeatureDetector(mCV);
+			mAsyncFD.setFeatureDetectionListener(this);
+			mAsyncFD.execute(mRefImg);
 
-		Log.i(TAG, "OpenCV Camerabridge has started with width: " + w + " and height: " + h );
-	}
-
-	@Override
-	public void onFailedToExtractFeatures() {
-		// TODO Notify user that the application was unable to extract any features 
-		// about the display
-
-		// Set all other asyncronous tasks to null signifying that features
-		// have not been found on reference image
-		mAsyncBoxer = null;
-		mAsyncFeatureDrawer = null;
-		mAsyncImageWarper = null;
+			b.recycle(); // Free up the memory as soon as possible
+//		}
 	}
 
 	/**
 	 * Holds the reference image information
+	 * 
 	 */
 	private ImageInformation mRefImgInfo = null; 
-
-	/**
-	 * This will initialize all the nescesary 
-	 */
-	@Override
-	public void onExtractedFeatures(ImageInformation info) {
-		// Initialize the Async Boxer if there is an image set available
-		mRefImgInfo = info;
-		mDisplayOptSpinner.setEnabled(true);
-	}
-
-	@Override
-	public void onCameraViewStopped() {
-		// TODO Either find out why it stopped or close the program 
-		// due to intention stop
-		Log.i(TAG, "OpenCV Camerabridge has stopped");
-	}
 
 	@Override
 	public Mat onCameraFrame(Mat inputFrame) {
 		// Set this image as new Other image
-		Log.i(TAG, "Mat input width: " + inputFrame.cols() + " height:" + inputFrame.rows());
+		Log.d(TAG, "Mat input width: " + inputFrame.cols() + " height:" + inputFrame.rows());
 
 		// Transfer the data to mRgba for general display
 		inputFrame.copyTo(mRgba);
-
 
 		Mat workImage = new Mat();
 		mRgba.copyTo(workImage);
@@ -375,12 +336,51 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 					mAsyncImageWarper.execute(workImage);
 				}
 				break;
+			case DONT_DISPLAY:
+			default:
+				return mRgba;
 			}
 		}
-		if (mResult != null)
+
+		// 
+		if (mResult != null) {
+			Log.d(TAG, "Calculated result input width: " + mResult.cols() + " height:" + mResult.rows());
 			return mResult;
-		else 
+		} else 
 			return mRgba;
+	}
+
+	//////////////////////////////////////////////////////
+	//// CameraViewBase callback methods for interpreting 
+	//////////////////////////////////////////////////////
+
+	@Override
+	public void onFailedToExtractFeatures() {
+		// TODO Notify user that the application was unable to extract any features 
+		// about the display
+
+		// Set all other asyncronous tasks to null signifying that features
+		// have not been found on reference image
+		mAsyncBoxer = null;
+		mAsyncFeatureDrawer = null;
+		mAsyncImageWarper = null;
+	}
+
+	/**
+	 * This will initialize all the nescesary 
+	 */
+	@Override
+	public void onExtractedFeatures(ImageInformation info) {
+		// Initialize the Async Boxer if there is an image set available
+		mRefImgInfo = info;
+		mDisplayOptSpinner.setEnabled(true);
+	}
+
+	@Override
+	public void onCameraViewStopped() {
+		// TODO Either find out why it stopped or close the program 
+		// due to intention stop
+		Log.i(TAG, "OpenCV Camerabridge has stopped");
 	}
 
 	private Mat mResult;
@@ -429,7 +429,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-		String message = null;
 		if (resultCode != RESULT_OK) {
 			Toast t = Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT);
 			t.show();
@@ -459,9 +458,20 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	///// Private Helper class that will help encapsulate Tranformation Builder Procedure
 	////////////////////////////////////////////////////////////////////
 
+	@Override
+	public void onItemSelected(AdapterView<?> spinner, View arg1, int pos,
+			long arg3) {
+		if (spinner == mDisplayOptSpinner){
+			mCurrentOption = mDisplayOptions[pos];
+		}
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> spinner) {}
+
 	/**
 	 * Initializes spinners for display options
-	 * @param s
+	 * @param s 
 	 */
 	private void initializeDisplayOptions(Spinner s) {
 		ArrayAdapter<DISPLAY_OPTION> dataAdapter = 

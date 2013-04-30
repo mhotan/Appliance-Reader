@@ -1,6 +1,11 @@
-package uw.cse.mag.appliancereader.datatype;
+package uw.cse.mag.appliancereader.db.datatype;
 
-import uw.cse.mag.appliancereader.util.Util;
+import uw.cse.mag.appliancereader.db.ApplianceNotExistException;
+import uw.cse.mag.appliancereader.db.FileManager;
+import uw.cse.mag.appliancereader.imgproc.Size;
+import uw.cse.mag.appliancereader.util.ImageIO;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -55,8 +60,11 @@ public class Appliance {
 	 */
 	private ApplianceFeatures mFeatures;
 	
+	private final FileManager mFileManager;
+	
 	public Appliance(){
 		mId = -1;
+		mFileManager = FileManager.getInstance();
 	}
 	
 	/*
@@ -84,7 +92,15 @@ public class Appliance {
 	}
 	
 	public void setApplianceFeatures(ApplianceFeatures af){
+		if (af == null) return;
 		this.mFeatures = af;
+		if (mFileManager.hasAppliance(this)) {
+			try {
+				mFileManager.addXMLFile(this, af);
+			} catch (ApplianceNotExistException e) {
+				Log.e(TAG, "Error with file manager recognizing the appliane exists");
+			}
+		}
 	}
 	
 	public void setDirectoryPath(String directoryPath){
@@ -145,24 +161,11 @@ public class Appliance {
 	public String toString(){
 		if (mNickName != null)
 			return mNickName;
-		if (mDirectory != null) {
-			// Strip away .../something.../<name>.xml
-			// to <name>
-			return Util.stripPathAndExtension(mDirectory);
-		}
-		
-		String s = "";
-		if (mMake != null)
-			s += "Make: " + mMake;
-		if (s.length() != 0)
-			s += " ";
-		if (mModel != null)
-			s += "Model: " + mModel;
-		if (s.length() != 0)
-			return s;
-		if (mType != null)
+		if (mMake != null && mModel != null )
+			return mMake + "_" + mModel;
+		if (mType != null) 
 			return "Unknown " + mType;
-		return "Unknown Appliance " + mId;
+		return null;
 	}
 	
 	private static final String BUNDLE_ID = "APP_BUN_ID";
@@ -199,7 +202,37 @@ public class Appliance {
 		a.setModel(b.getString(BUNDLE_MODEL));
 		a.setType(b.getString(BUNDLE_TYPE));
 		a.setDirectoryPath(b.getString(BUNDLE_DIR));
+		
+		// Attempt to get and reload the appliance features
+		FileManager f = FileManager.getInstance();
+		ApplianceFeatures af = f.getFeatures(a);
+		a.mFeatures = af;
 		return a;
+	}
+
+	/**
+	 * Returns Configuration.ORIENTATION_LANDSCAPE, or Configuration.ORIENTATION_PORTRAIT
+	 * @return orientation of image
+	 */
+	public int getRefimageOrientation() {
+		String path = mFileManager.getReferenceImage(this);
+		return ImageIO.getOrientationOfImage(path);
+	}
+
+	/** 
+	 * @return size of reference image
+	 */
+	public Size getSizeOfRefImage() {
+		return ImageIO.getSizeOfImage(mFileManager.getReferenceImage(this));
+	}
+
+	/**
+	 * 
+	 * @param actualDimension
+	 * @return
+	 */
+	public Bitmap getReferenceImage(Size dimensions) {
+		return ImageIO.loadBitmapFromFilePath(mFileManager.getReferenceImage(this), dimensions);
 	}
 }
 

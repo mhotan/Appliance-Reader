@@ -15,7 +15,7 @@ import org.opencv.features2d.FeatureDetector;
 
 import uw.cse.mag.appliancereader.cv.CVSingletons;
 import uw.cse.mag.appliancereader.cv.ComputerVision;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeatures;
 import android.os.AsyncTask;
 import android.util.Log;
 

@@ -1,21 +1,13 @@
-package uw.cse.mag.appliancereader.datatype;
+package uw.cse.mag.appliancereader.db.datatype;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.opencv.core.Point;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.app.Activity;
-import android.content.res.Resources;
-import android.content.res.XmlResourceParser;
 import android.util.Log;
 
 /**
@@ -74,8 +66,6 @@ public class ApplianceXMLParser {
 						while (!(objectType == XmlPullParser.END_TAG && 
 								object.equals(tagName))){
 
-							stringBuffer.append("\nObject Start: " + xpp.getName());
-
 							// If the current tag is the NAME object
 							if (objectType == XmlPullParser.START_TAG &&
 									tagName.equals(FEATURE_NAME_TAG)){
@@ -85,10 +75,6 @@ public class ApplianceXMLParser {
 								else objectName = null;
 							}
 							stringBuffer.append("\nObject Name: " + xpp.getName());
-
-							// TODO Add additional Fields here... 
-
-
 
 							// For every point within the object add to list
 							if (objectType == XmlPullParser.START_TAG &&
@@ -152,7 +138,9 @@ public class ApplianceXMLParser {
 							objectType = xpp.next();
 							tagName = xpp.getName(); 
 						}
-
+						
+						// TODO Add object as feature
+						features.addFeature(objectName, fPoints);
 						stringBuffer.append("\nObject END: " + xpp.getName());
 
 						// Check for name 
@@ -177,8 +165,110 @@ public class ApplianceXMLParser {
 			e.printStackTrace();
 		}
 	}
+	
+	
 
 	/*
 	 * TODO Add Special Exception refurring to XML Ill formatted Documents 
 	 */
+	public static ApplianceFeatures parse(XmlPullParser xpp) throws XmlPullParserException, IOException {
+		ApplianceFeatures af = new ApplianceFeatures() {
+		};
+		xpp.next(); // Initial increment 
+		while (xpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+			// For every feature that is enclosed with object
+			if (xpp.getEventType() == XmlPullParser.START_TAG 
+					&& FEATURE_TAG.equals(xpp.getName())){
+				// TODO Extract value of name with TAG = name
+				String name = extractFeatureName(xpp);
+				
+				// Find the polygon tag to recognize the outline of the object
+				// TAG Polygon
+				List<Point> list = extractPolygon(xpp);
+				af.addFeature(name, list);
+			}
+			xpp.next();
+		}
+		
+		return af;
+	}
+	
+	private static Point extractNextPoint(XmlPullParser xpp) 
+			throws XmlPullParserException, IOException{
+		while (!(xpp.getEventType() == XmlPullParser.START_TAG && 
+				FEATURE_PT_TAG.equals(xpp.getName()))){
+			// Fail case
+			if (xpp.getEventType() == XmlPullParser.END_DOCUMENT) return null;
+			xpp.next();
+		}
+		
+		// We found the initial pt tag
+		
+		while (!(xpp.getEventType() == XmlPullParser.START_TAG && 
+				FEATURE_PT_X_TAG.equals(xpp.getName()))) {
+			// Fail case
+			if (xpp.getEventType() == XmlPullParser.END_DOCUMENT) return null;
+			xpp.next();
+		}
+		// X tag found 
+		double x = Double.parseDouble(xpp.nextText());
+		
+		while (!(xpp.getEventType() == XmlPullParser.START_TAG && 
+				FEATURE_PT_Y_TAG.equals(xpp.getName()))) {
+			// Fail case
+			if (xpp.getEventType() == XmlPullParser.END_DOCUMENT) return null;
+			xpp.next();
+		}
+		double y = Double.parseDouble(xpp.nextText());
+		return new Point(x, y);
+	}
+	
+	private static List<Point> extractPolygon(XmlPullParser xpp) 
+			throws XmlPullParserException, IOException{
+		while (!(xpp.getEventType() == XmlPullParser.START_TAG 
+				&& FEATURE_SHAPE_TAG.equals(xpp.getName()))){
+			//Fail case
+			if (xpp.getEventType() == XmlPullParser.END_DOCUMENT)
+				return null;
+			xpp.next();
+		}
+		
+		// We have the intial tag for the start of all the points
+		List<Point> list = new LinkedList<Point>();
+		// Found start of polygon tag
+		while (!(xpp.getEventType() == XmlPullParser.END_TAG && 
+				FEATURE_SHAPE_TAG.equals(xpp.getName()))){
+			if (xpp.getEventType() == XmlPullParser.END_DOCUMENT) {
+				if (list.size() <= 2)
+					return null; // Malformed XML
+				else
+					return list;
+			}
+			Point p = extractNextPoint(xpp);
+			if (p != null)
+				list.add(p);
+			xpp.next();
+		}
+		return list;
+	}
+	
+	/**
+	 * Extract the name of the feature
+	 * @param xpp
+	 * @return
+	 * @throws XmlPullParserException
+	 * @throws IOException
+	 */
+	private static String extractFeatureName(XmlPullParser xpp) 
+			throws XmlPullParserException, IOException {
+		while (!(xpp.getEventType() == XmlPullParser.START_TAG 
+				&& FEATURE_NAME_TAG.equals(xpp.getName()))){
+			if (xpp.getEventType() == XmlPullParser.END_DOCUMENT)
+				return null;
+			xpp.next();
+		}
+		// Increment one to get the text
+		return xpp.nextText();		
+	}
+	
 }

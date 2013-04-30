@@ -1,4 +1,4 @@
-package uw.cse.mag.appliancereader.datatype;
+package uw.cse.mag.appliancereader.db.datatype;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +48,7 @@ public class ApplianceFeature {
 
 		mName = name;
 		mPoints = new ArrayList<Point>(shape.size());
-		for (Point p: mPoints){
+		for (Point p: shape){
 			mPoints.add(p.clone());
 		}
 	}

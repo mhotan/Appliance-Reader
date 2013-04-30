@@ -1,4 +1,4 @@
-package uw.cse.mag.appliancereader.datatype;
+package uw.cse.mag.appliancereader.db.datatype;
 
 import java.util.ArrayList;
 

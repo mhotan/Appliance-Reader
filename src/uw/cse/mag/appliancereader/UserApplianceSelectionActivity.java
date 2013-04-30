@@ -1,16 +1,12 @@
 package uw.cse.mag.appliancereader;
 
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import uw.cse.mag.appliancereader.camera.BaseImageTaker;
 import uw.cse.mag.appliancereader.camera.ExternalApplication;
-import uw.cse.mag.appliancereader.datatype.Appliance;
-import uw.cse.mag.appliancereader.db.ApplianceDBAdapter;
-import uw.cse.mag.appliancereader.db.ApplianceDataSource;
-import uw.cse.mag.appliancereader.db.ApplianceDataSource.DatabaseNotInitializedException;
-import uw.cse.mag.appliancereader.db.ApplianceNotExistException;
+import uw.cse.mag.appliancereader.db.UserApplianceDataSource;
+import uw.cse.mag.appliancereader.db.datatype.Appliance;
 import uw.cse.mag.appliancereader.util.ImageIO;
 import uw.cse.mag.appliancereader.util.Util;
 import android.app.Activity;
@@ -35,7 +31,7 @@ public class UserApplianceSelectionActivity extends Activity implements OnLongCl
 	private static final Logger log = Logger.getLogger(UserApplianceSelectionActivity.class.getSimpleName()); 
 	private static final int REQUEST_CODE_DEFAULT_APPLIANCES = 0x1;
 	private static final int REQUEST_CODE_REFER_DEFAULT_IMAGES = REQUEST_CODE_DEFAULT_APPLIANCES + 1;
-	private ApplianceDataSource mUserDatasource;
+	private UserApplianceDataSource mUserDatasource;
 
 	//UI elements
 	private Button mGetMoreButton;
@@ -55,17 +51,17 @@ public class UserApplianceSelectionActivity extends Activity implements OnLongCl
 		mListView = (ListView)findViewById(R.id.appliance_list);
 
 		// Create connection to database
-		mUserDatasource = new ApplianceDataSource(this, ApplianceDBAdapter.USER_TABLE);
+		mUserDatasource = new UserApplianceDataSource(this);
 		mUserDatasource.open();
 
 		List<Appliance> values = null;
-		try {
-			values = mUserDatasource.getAllAppliances();
-		} catch (DatabaseNotInitializedException e) {
-			log.log(Level.SEVERE, "Unable to access the data base for all appliances.  The current" +
-					"implementation does not properly open the database");
-		}
+		values = mUserDatasource.getAllAppliances();
 
+		// Debug 
+//		if (values.isEmpty()) {
+//			processNoAppliances()
+//		}
+		
 		ArrayAdapter<Appliance> adapter = new ArrayAdapter<Appliance>(
 				this, android.R.layout.simple_expandable_list_item_1, values);
 		mListView.setAdapter(adapter);
@@ -125,51 +121,47 @@ public class UserApplianceSelectionActivity extends Activity implements OnLongCl
 
 		if (resultCode == RESULT_OK) {
 			Bitmap img = null;
-			try {
-				switch (requestCode) {
-				case REQUEST_CODE_DEFAULT_APPLIANCES : 
+			
+			mUserDatasource.open();
+			
+			switch (requestCode) {
+			case REQUEST_CODE_DEFAULT_APPLIANCES : 
 
-					Bundle b = data.getBundleExtra(Appliance.KEY_BUNDLE_APPLIANCE);
-					Appliance app = Appliance.toAppliance(b);
-					
-					ApplianceDataSource defAppSrc = new ApplianceDataSource(this, ApplianceDBAdapter.DEFAULT_TABLE);
-					defAppSrc.open();
-					try {
-						img = defAppSrc.getReferenceImage(app, null);
-					} catch (ApplianceNotExistException e) {
-						Log.e(TAG, "User Appliance selection. Unable to load reference image");
-					}
-					defAppSrc.close();
-					
-					// Save in user database
-					mUserDatasource.createAppliance(app, img);
-					break;
-				case REQUEST_CODE_REFER_DEFAULT_IMAGES: 
-					// Add more cases
-
-					// New appliance to store
-					img = processNewAppliance(data);
-
-					// TODO Ask user for name
-					String timeStamp = Util.getTimeStamp();
-					String name = "Unknown_" + timeStamp;
-
-					//TODO Ask user to draw bounding box.
-					Appliance a = new Appliance();
-					a.setNickName(name);
-					// Save the reference image
-					mUserDatasource.createAppliance(a, img);
-//					datasource.saveApplianceReferenceImage(a, img);
-					
-					// Store Appliance result in Bundle
-					data.putExtra(Appliance.KEY_BUNDLE_APPLIANCE, a.toBundle());
+				Bundle b = data.getBundleExtra(Appliance.KEY_BUNDLE_APPLIANCE);
+				if (b == null) {
+					Log.e(TAG, "Unable retrieve a bundle from default selection");
+					return;
 				}
-				// Always executes
-				setResult(resultCode, data);
-				finish();
-			} catch (DatabaseNotInitializedException e) {
-				log.log(Level.SEVERE, "Database was not intialized for appliance e: " + e);
+
+				// Save the appliance 
+				Appliance app = Appliance.toAppliance(b);
+
+				// Save in user database
+				app = mUserDatasource.createAppliance(app.getNickname(), app.getMake(), 
+						app.getModel(), app.getType(), app.getDirectoryPath());
+				
+				// Store Appliance result in Bundle
+				data.putExtra(Appliance.KEY_BUNDLE_APPLIANCE, app.toBundle());
+				break;
+			case REQUEST_CODE_REFER_DEFAULT_IMAGES: 
+				// Add more cases
+
+				// New appliance to store
+				img = processNewAppliance(data);
+
+				// TODO Ask user for name
+				String timeStamp = Util.getTimeStamp();
+				String name = "Unknown_" + timeStamp;
+
+				// Save the reference image
+				Appliance a = mUserDatasource.createAppliance(name, null, null, null, img);
+
+				// Store Appliance result in Bundle
+				data.putExtra(Appliance.KEY_BUNDLE_APPLIANCE, a.toBundle());
 			}
+			// Always executes
+			setResult(resultCode, data);
+			finish();
 		}
 
 	}

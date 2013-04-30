@@ -4,18 +4,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.opencv.core.Point;
 import org.xmlpull.v1.XmlSerializer;
 
-import uw.cse.mag.appliancereader.datatype.Appliance;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeature;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeatureFactory;
-import uw.cse.mag.appliancereader.datatype.ApplianceFeatures;
-import uw.cse.mag.appliancereader.datatype.ApplianceXMLParser;
+import uw.cse.mag.appliancereader.db.datatype.Appliance;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeature;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeatureFactory;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeatures;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceXMLParser;
 import uw.cse.mag.appliancereader.util.ImageIO;
 import uw.cse.mag.appliancereader.util.Util;
 import android.graphics.Bitmap;
@@ -42,7 +41,7 @@ import android.util.Xml;
  * @author mhotan
  *
  */
-class FileManager {
+public class FileManager {
 	private static final String TAG = FileManager.class.getSimpleName();
 
 	// Directories
@@ -77,7 +76,7 @@ class FileManager {
 	 * 		This file path must lead be a path to a directory of the layout above
 	 * 
 	 */
-	private Map<Long, String> mApplianceDirectories;
+	private List<String> mApplianceDirectories;
 
 	/**
 	 * Private constructor so that there is only one instance of
@@ -88,7 +87,7 @@ class FileManager {
 	private FileManager(){
 		String[] directories =  new String[] {DATA_PATH, APPLIANCES_PATH};
 		addDirectories(directories);
-		mApplianceDirectories = new HashMap<Long, String>();
+		mApplianceDirectories = new LinkedList<String>();
 	}
 
 	/**
@@ -113,12 +112,23 @@ class FileManager {
 	 * @return Whether the appliance already exist, if appliance does not have valid ID false 
 	 */
 	public synchronized boolean hasAppliance(Appliance app) {
-		Long id = app.getID();
-		if (id == -1L){ // Failure case
-			throw new IllegalArgumentException("Illegal Appliance STATE, ID cannot be -1");
+		String path = app.getDirectoryPath();
+		if (path == null) {
+			Log.e(TAG, "HasAppliance called but appliance has null directory path");
+			return false;
 		}
-		return mApplianceDirectories.containsKey(id) && // Must contain the right key
-				mApplianceDirectories.get(id).equals(app.getDirectoryPath()); // key has to map to latest file
+		
+		boolean runtimeCheck =  mApplianceDirectories.contains(path);
+		if (runtimeCheck) return true;
+		
+		// Now we have to check if we have a directory that exist for this app but it
+		// is not known in this running sessions
+		File f = new File(path);
+		if (f.isDirectory()) {
+			mApplianceDirectories.add(path);
+			return true;
+		}
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -132,29 +142,33 @@ class FileManager {
 	 * only contain alpha numeric 
 	 * @param simpleName Name of appliance to create
 	 * @return The same appliance instance but with an updated Directory
+	 * @throws IOException 
 	 */
-	public synchronized Appliance addAppliance(Appliance app) {
+	public synchronized String addAppliance(Appliance app) throws IOException {
 		// The time stamped directory and 
-		// ID are equal
+		// Check if the directory is already stored
 		if (hasAppliance(app))
-			return app;
+			return app.getDirectoryPath();
 
 		// There is already an appliance with the same ID.
 		// Must check if id and path are correctly matched
 		// The directory path doesn't match up
-		String storedPath = mApplianceDirectories.get(app.getID());
-		if (storedPath != null) { // there is directory that exist that correlates the ID
-			removeAppliance(app);
-		}
+//		String storedPath = mApplianceDirectories.get(app.getID());
+//		if (storedPath != null) { // there is directory that exist that correlates the ID
+//			removeAppliance(app);
+//		}
 
 		// Adds a unique Directory path marked with time stamp
-		String appliancePath = createNewDirectory(app.getID());
-
-		// Add to cache / map 
-		mApplianceDirectories.put(app.getID(), appliancePath);
-		// Add the appliance path current Appliance
+		String appliancePath = createNewDirectory(app.toString());
+		if (appliancePath == null) {
+			throw new IOException("Unable to create a directory to contain Appliance named: " + app);
+		}
+		// Sets the directory path of this appliance
 		app.setDirectoryPath(appliancePath);
-		return app;
+		
+		// Add to cache / map 
+		mApplianceDirectories.add(appliancePath);
+		return appliancePath;
 	}
 
 	/**
@@ -169,12 +183,15 @@ class FileManager {
 	public synchronized void setReferenceImage(Appliance appliance, Bitmap newRefImg) 
 			throws ApplianceNotExistException {
 		// Bitmap is null
-		if (newRefImg == null)
+		if (newRefImg == null) {
 			Log.d(TAG, "Null Image attempted to be saved as reference");
+			throw new IllegalArgumentException("Illegal input: NULL Bitmap");
+		}
+		
 		// Check if appliance exist
 		if (hasAppliance(appliance)){
-			String refPath = mApplianceDirectories.get(appliance) + REFERENCE_IMAGES_DIR + REFERENCE_IMG_FILE;
-			ImageIO.saveBitmapToFile(newRefImg, refPath);
+			String refPath = appliance.getDirectoryPath() + REFERENCE_IMAGES_DIR + REFERENCE_IMG_FILE;
+			ImageIO.saveBitmapToFile(newRefImg, refPath);	
 		} else
 			throw new ApplianceNotExistException(appliance);
 	}
@@ -195,18 +212,13 @@ class FileManager {
 	 */
 	public synchronized void addXMLFile(Appliance appliance, ApplianceFeatures appFeatures) 
 			throws ApplianceNotExistException {
-		// TODO Implement saving the XML file
-		if (appliance.getDirectoryPath() == null)
-			throw new IllegalArgumentException("Attempting to add a group of appliance features" +
-					"into a directory that doesn't exist.  Call addAppliance(Appliance a) to initialize" +
-					"the directory");
 
 		// Check appliance exist 
 		if (!hasAppliance(appliance))
 			throw new ApplianceNotExistException(appliance);
 
 		// Create the file path for the XML
-		String xmlPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + XML_FEATURES_FILE;
+		String xmlPath = appliance.getDirectoryPath() + XML_FILE_DIR + XML_FEATURES_FILE;
 		File xmlFile = new File(xmlPath);
 
 		// delete the XML file if it exists
@@ -298,12 +310,15 @@ class FileManager {
 	 * @param appliance Appliance to delete
 	 */
 	public synchronized void removeAppliance(Appliance appliance) {
-		String pathToDel = mApplianceDirectories.get(appliance.getID());
+		if (!hasAppliance(appliance))
+			return;
+		
+		String pathToDel = appliance.getDirectoryPath();
 		if (!deleteDirectory(pathToDel)){
 			Log.w(TAG, "Path: " + pathToDel + " does not exist but attempted to be deleted");
 		} 
 		// Remove from mapping
-		mApplianceDirectories.remove(appliance.getID());
+		mApplianceDirectories.remove(appliance.getDirectoryPath());
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -318,7 +333,7 @@ class FileManager {
 	 */
 	public synchronized String getReferenceImage(Appliance appliance) {
 		if (hasAppliance(appliance)){
-			String refPath = mApplianceDirectories.get(appliance) + REFERENCE_IMAGES_DIR + REFERENCE_IMG_FILE;;
+			String refPath = appliance.getDirectoryPath() + REFERENCE_IMAGES_DIR + REFERENCE_IMG_FILE;;
 			File refFile = new File(refPath);
 			if (refFile.exists())
 				return refFile.getAbsolutePath();
@@ -331,8 +346,16 @@ class FileManager {
 		return null;
 	}
 
+	/**
+	 * 
+	 * @param appliance
+	 * @return null if not features exist
+	 */
 	public synchronized ApplianceFeatures getFeatures(Appliance appliance){
-		String xmlPath = mApplianceDirectories.get(appliance) + XML_FILE_DIR + XML_FEATURES_FILE;
+		if (!hasAppliance(appliance))
+			return null;
+		
+		String xmlPath = appliance.getDirectoryPath() + XML_FILE_DIR + XML_FEATURES_FILE;
 		ApplianceFeatures features = null;
 		try {
 			features = ApplianceFeatureFactory.getApplianceFeatures(xmlPath);
@@ -352,8 +375,8 @@ class FileManager {
 	 * correlates with id and current timestamp
 	 * @return path to root of directory
 	 */
-	private String createNewDirectory(long id){
-		String path = APPLIANCES_PATH + id + "_" + Util.getTimeStamp() + "/";
+	private String createNewDirectory(String name){
+		String path = APPLIANCES_PATH + name + "_" + Util.getTimeStamp() + "/";
 		addDirectory(path);
 
 		// Add all the subdirectories
