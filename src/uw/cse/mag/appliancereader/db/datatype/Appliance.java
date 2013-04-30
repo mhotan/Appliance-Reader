@@ -1,10 +1,13 @@
 package uw.cse.mag.appliancereader.db.datatype;
 
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.highgui.Highgui;
+
 import uw.cse.mag.appliancereader.db.ApplianceNotExistException;
 import uw.cse.mag.appliancereader.db.FileManager;
 import uw.cse.mag.appliancereader.imgproc.Size;
 import uw.cse.mag.appliancereader.util.ImageIO;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -112,11 +115,23 @@ public class Appliance {
 	 * Scales down all the features
 	 * @param scaleFactor int factor to scale points down by
 	 */
-	public void scaleDownFeatures(float scaleFactor) {
+	public void scaleFeatures(float scaleFactor) {
 		if (mFeatures == null) {
 			Log.w(TAG, "No features found to scale");
 		} else {
-			mFeatures.scaleDownFeatures(scaleFactor);
+			mFeatures.scaleFeatures(scaleFactor);
+		}
+	}
+	
+	/**
+	 * Rotate each point in the image by a particular point
+	 * @param rotMat2by3 center point on which to rotate
+	 */
+	public void rotateFeatures(Mat rotMat2by3){
+		if (mFeatures == null) {
+			Log.w(TAG, "No features found to scale");
+		} else {
+			mFeatures.rotateAround(rotMat2by3);
 		}
 	}
 	
@@ -231,8 +246,14 @@ public class Appliance {
 	 * @param actualDimension
 	 * @return
 	 */
-	public Bitmap getReferenceImage(Size dimensions) {
-		return ImageIO.loadBitmapFromFilePath(mFileManager.getReferenceImage(this), dimensions);
+	public Bitmap getReferenceImage(org.opencv.core.Size actualDimension) {
+		return ImageIO.loadBitmapFromFilePath(mFileManager.getReferenceImage(this), actualDimension);
 	}
+	
+	public Mat getReferenceImageMat(){
+		String path = mFileManager.getReferenceImage(this);
+		return Highgui.imread(path);
+	}
+
 }
 

@@ -7,9 +7,9 @@ public class ImageInformation {
 	
 	private static final String TAG = ImageInformation.class.getSimpleName();
 	
-	final Mat mImage;
-	final MatOfKeyPoint mFeatureKeyPts;
-	final Mat mFeatureDescriptors;
+	public final Mat mImage;
+	public final MatOfKeyPoint mFeatureKeyPts;
+	public final Mat mFeatureDescriptors;
 	
 	public ImageInformation(Mat image, MatOfKeyPoint keyPoints, Mat descriptors){
 		mImage = image;

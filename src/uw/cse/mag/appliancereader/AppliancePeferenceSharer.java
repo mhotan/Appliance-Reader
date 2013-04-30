@@ -1,6 +1,8 @@
 package uw.cse.mag.appliancereader;
 
+import uw.cse.mag.appliancereader.db.FileManager;
 import uw.cse.mag.appliancereader.db.datatype.Appliance;
+import uw.cse.mag.appliancereader.db.datatype.ApplianceFeatures;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -53,6 +55,10 @@ public class AppliancePeferenceSharer {
     	a.setModel(appSharedPrefs.getString(KEY_MODEL, null));
     	a.setType(appSharedPrefs.getString(KEY_TYPE, null));
     	a.setDirectoryPath(appSharedPrefs.getString(KEY_DIRECTORY, null));
+    	
+    	FileManager f = FileManager.getInstance();
+    	ApplianceFeatures af = f.getFeatures(a);
+    	a.setApplianceFeatures(af);
     	return a;
     }
     

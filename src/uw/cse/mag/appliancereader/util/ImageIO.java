@@ -224,7 +224,7 @@ public class ImageIO {
 	 * @param size Desired size of the image to be returned
 	 * @return Image at desired size or full size
 	 */
-	public static Bitmap loadBitmapFromFilePath(String filePath, Size size){
+	public static Bitmap loadBitmapFromFilePath(String filePath, org.opencv.core.Size size){
 		if (filePath == null)
 			throw new IllegalArgumentException("Null Filepath for loading");
 

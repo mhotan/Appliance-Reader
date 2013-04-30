@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 
@@ -126,9 +127,57 @@ public class ApplianceFeature {
 		Point minPt = new Point(minX, minY);
 		Point maxPt = new Point(maxX, maxY);
 		Rect r = new Rect(minPt, maxPt);
-		
+
 		log.log(Level.INFO, "Bounding box found around feature " + mName + " TL:" + r.tl() + " BR:" + r.br());
-		
+
 		return r;
+	}
+
+	/**
+	 * Rotates this feature
+	 * @param center center to rotate feature around
+	 * @param radians 
+	 */
+	public void rotate(Point center, double radians) {
+		List<Point> rotatedList = new ArrayList<Point>(mPoints.size());
+		for (Point p : mPoints) {
+			// translate point tP
+			Point tP = new Point(p.x - center.x, p.y - center.y);
+			// Rotated point 		
+			Point rP = new Point(tP.x * Math.cos(radians) - tP.y * Math.sin(radians),
+					tP.x * Math.sin(radians) + tP.y * Math.cos(radians));
+			// Translate the point back
+			rotatedList.add(new Point(rP.x + center.x, rP.y + center.y));
+		}
+
+		// Clear out the old points
+		mPoints.clear();
+		for (Point p: rotatedList) {
+			mPoints.add(p);
+		}
+	}
+
+	/**
+	 * Rotates all the points of this feature by the matrix
+	 * @param rotMat2by3
+	 */
+	public void rotate(Mat rotMat2by3) {
+		double m11 = rotMat2by3.get(0, 0)[0];
+		double m12 = rotMat2by3.get(0, 1)[0];
+		double m13 = rotMat2by3.get(0, 2)[0];
+		double m21 = rotMat2by3.get(1, 0)[0];
+		double m22 = rotMat2by3.get(1, 1)[0];
+		double m23 = rotMat2by3.get(1, 2)[0];
+		
+		List<Point> rotatedList = new ArrayList<Point>(mPoints.size());
+		for (Point p : mPoints) {
+			rotatedList.add(new Point(m11*p.x + m12*p.y + m13, m21*p.x + m22*p.y + m23));
+		}
+		
+		// Clear out the old points
+		mPoints.clear();
+		for (Point p: rotatedList) {
+			mPoints.add(p);
+		}
 	}
 }

@@ -5,6 +5,9 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.android.JavaCameraView;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
 
 import uw.cse.mag.appliancereader.cv.ComputerVision;
 import uw.cse.mag.appliancereader.cv.ComputerVisionCallback;
@@ -54,12 +57,15 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	// Log Tag
 	private static final String TAG = MainActivity.class.getSimpleName();
 
+	// Angle to rotate the reference image
+	private static final double ROTATE_ANGLE = 90.0;
+	private static final double ROTATE_SCALE = 1.0;
+
 	// String representations of storage
 	public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/ApplianceReaderSpecific/";
 	public static final String APPLIANCES_PATH = DATA_PATH + "Appliances/";
 
 	private static final int SELECT_APPLIANCE = 0x1;
-
 	private static final String SAVED_APPLIANCE = MainActivity.class.getName() + "_SAVED_APPLIANCE";
 
 	/**
@@ -131,8 +137,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		// Create a computer vision instance to handle all the procedures
 		mCV = new ComputerVision(this.getApplicationContext(), this, this);
 	}
-
-
 
 	@Override
 	public void onPause()
@@ -232,6 +236,133 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	//// CameraViewBase callback methods for interpreting 
 	//////////////////////////////////////////////////////
 
+	/**
+	 * 
+	 * @param original
+	 * @param af
+	 * @return
+	 */
+	private Mat rotate(Mat original, ApplianceFeatures af){
+		// Rotate referencing website http://stackoverflow.com/questions/12852578/image-rotation-with-opencv-in-android-cuts-off-the-edges-of-an-image
+		// Obtain the width and height of the rotated image
+		double radians = Math.toRadians(ROTATE_ANGLE);
+		double sin = Math.abs(Math.sin(radians));
+		double cos = Math.abs(Math.cos(radians));
+
+		org.opencv.core.Size initialSize = original.size();
+
+		int newWidth = (int) (original.width() * cos + original.height() * sin);
+		int newHeight = (int)(original.width() * sin + original.height() * cos);
+
+		// Create a new size box newWidth and newHeight
+		int pivotX = newWidth / 2;
+		int pivotY = newHeight / 2;
+
+		org.opencv.core.Point center = new org.opencv.core.Point(pivotX, pivotY);
+		org.opencv.core.Size targetSize = new org.opencv.core.Size(newWidth, newHeight);
+		Log.d(TAG, "Center found x:" + center.x + " y:"+center.y);
+		// Create a new Mat with the corrext type
+		Mat targetMat = new Mat(targetSize, original.type());
+
+		// obtain the rotation matrix
+		Mat rotateMatrix = Imgproc.getRotationMatrix2D(center, ROTATE_ANGLE, 1.0);
+
+		Imgproc.warpAffine(original, targetMat, rotateMatrix, targetSize);
+
+		if (af != null)
+			af.rotateAround(rotateMatrix);
+
+		return targetMat;
+	}
+
+	/**
+	 * 
+	 * @param actualDim
+	 * @return
+	 */
+	private Mat setupv2(org.opencv.core.Size actualDim){
+		// Mat constructors 
+
+		Size original = mCurrentAppliance.getSizeOfRefImage();
+		boolean needsRotation = original.width > original.height 
+				&& actualDim.width <= actualDim.height || original.width <= original.height & actualDim.width > actualDim.height;
+				// Creates a scale down image
+				Bitmap ref;
+				// If the orientations dont match
+				// swap the size dimensions
+				if (needsRotation) {
+					ref = mCurrentAppliance.getReferenceImage(
+							new org.opencv.core.Size(actualDim.height, actualDim.width));
+				} else
+					ref = mCurrentAppliance.getReferenceImage(actualDim);
+				int width = ref.getWidth();
+				int height = ref.getHeight();
+				Log.d(TAG, "Reference width: " + width + " height: " + height);
+
+				// Get the scale factor and reduce the feature point appropiately
+				float scaleFactor = (float)ref.getWidth() / (float)original.width;
+				mCurrentAppliance.scaleFeatures(scaleFactor);
+
+				// Creates a new frame to output this 
+				Mat refMat = ImageConversion.bitmapToMat(ref);
+				logImg("Reference after scale", refMat);
+
+				// Check if we need to rotate the image
+				if (needsRotation){ // Rotate by 90
+					refMat = rotate(refMat, mCurrentAppliance.getApplianceFeatures());
+				}
+				logImg("Reference after scale and rotation", refMat);
+
+				return refMat;
+	}
+
+	@Deprecated
+	private Mat setupv1(org.opencv.core.Size actualDim){
+		Mat refImg = mCurrentAppliance.getReferenceImageMat();
+		logImg("Original reference", refImg);
+
+		// Create a place holder for this application
+		// TODO check whether these dimensions are correct
+		// Mat are constructed be column and rows
+		mRgba = new Mat((int)actualDim.height, (int)actualDim.width, refImg.type());
+		logImg("Initial camera frame", mRgba);
+
+		// NOTE: Open CV camera bridge view does not support 
+		// Portrait orientation.  I had to go into the Open CV Source
+		// Code and change CameraBridgeViewBase and change it.
+		// However its only the appearance on the screen that changes.
+		// The image is actually always being taken in "Landscape mode"
+		// As a current attempt to work around this issue.
+		// We will check if our reference image is in portrait mode
+		// If it is we will rotate the matrix 
+
+		// If in portrait mode
+		// Rotate the image so that the orientation matches the video input
+		Mat targetMat = null;
+		if (refImg.width() < refImg.height()) {
+			targetMat = rotate(refImg, mCurrentAppliance.getApplianceFeatures());
+			// We have to rotate the image appropiately
+			Log.d(TAG, "Rotated features: " + mCurrentAppliance.getApplianceFeatures().toString());
+
+		}
+		logImg("Reference image after rotation", targetMat);
+
+		// Now we must scale the reference image to the video output
+		// Noe both orientations are the same
+		// Scale down the image and the features of the image
+		Mat finalImg = new Mat(actualDim, targetMat.type());
+		Imgproc.resize(targetMat, finalImg, actualDim);
+
+		// IF the original image is larger then the input frame 
+		// then the scale factor will be < 1
+		float scaleFactor = (float)finalImg.width() / (float) refImg.width();
+
+		logImg("Initial image after rotation and scaling", finalImg);
+
+		mCurrentAppliance.scaleFeatures(scaleFactor);
+		return finalImg;
+	}
+
 	@Override
 	public void onCameraViewStarted(int w, int h) {
 		// TODO adjust the reference image with respect to the width and height that the camera is starting at
@@ -242,57 +373,57 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 		// get camera orientaion
 		// This orientation check is because OPENCV for android cant handle orientation changes
 		// IE think everything is in landscape
-//		int actualOrientation = getResources().getConfiguration().orientation;
-//		if (actualOrientation == Configuration.ORIENTATION_PORTRAIT) {
-//			int temp = w;
-//			w = h;
-//			h = temp;
-//		} 
+		//		int actualOrientation = getResources().getConfiguration().orientation;
+		//		if (actualOrientation == Configuration.ORIENTATION_PORTRAIT) {
+		//			int temp = w;
+		//			w = h;
+		//			h = temp;
+		//		} 
 
-		Size actualDimension = new Size(w,h);
-
-		// Create a place holder for this application
-		// TODO check whether these dimensions are correct
-		mRgba = new Mat(actualDimension.height, actualDimension.width, CvType.CV_8UC4);
-		Log.d(TAG, "Initial camera frame width: " + mRgba.width() + " height: " + mRgba.height());
-
-		//	Reference the initial Appliance 
+		//		Reference the initial Appliance 
 		//  Grab its reference image
 		if (mCurrentAppliance == null) {
 			Log.w(TAG, "onCameraViewStarted, Appliance should not be null");
 
-			// Change button of the appliance to show that no appliance is chosen
-			// TODO
 			return;
 		}
-		// Assert we have a current appliance
 
-		// If the Reference Image 
-		int refOrientation;
-		refOrientation = mCurrentAppliance.getRefimageOrientation();
-//		if (refOrientation == actualOrientation){
-			// Obtain the original size of the image
-			Size originaSize = mCurrentAppliance.getSizeOfRefImage();
-			Log.d(TAG, "Original image width: " + originaSize.width + " height: " + originaSize.height);
+		org.opencv.core.Size actualDimension = new org.opencv.core.Size(w,h);
 
-			// Obtain the image but scaled to the factor that matches the screen
-			Bitmap b = mCurrentAppliance.getReferenceImage(actualDimension);
-			// Scale down the features of this appliance if it exists
-			float scaleFactor = originaSize.width / b.getWidth();
-			mCurrentAppliance.scaleDownFeatures(scaleFactor);
-			Log.d(TAG, "Scaled image width: " + b.getWidth() + " height: " + b.getHeight());
+		Mat finalImg = setupv2(actualDimension);
 
-			// Convert our scaled image to a Mat
-			Mat mRefImg = ImageConversion.bitmapToMat(b);
-			Log.d(TAG, "Scaled and Converted image width: " + b.getWidth() + " height: " + b.getHeight());
+		if (DEBUG){
+			for (Rect r: mCurrentAppliance.getApplianceFeatures().getFeatureBoxes()){
+				mCV.drawRect(r, finalImg);
+			}
+		}
 
-			// Initialize the feature extraction for the reference Image
-			mAsyncFD = new AsyncFeatureDetector(mCV);
-			mAsyncFD.setFeatureDetectionListener(this);
-			mAsyncFD.execute(mRefImg);
+		mRgba = new Mat(actualDimension, finalImg.type());
+		Imgproc.resize(finalImg, mRgba, actualDimension);
+		logImg("Final reference Image", mRgba);
 
-			b.recycle(); // Free up the memory as soon as possible
-//		}
+		Mat copy = mRgba.clone();
+		// Initialize the feature extraction for the reference Image
+		mAsyncFD = new AsyncFeatureDetector(mCV);
+		mAsyncFD.setFeatureDetectionListener(this);
+		// DEBUG Dont execute intial
+		mAsyncFD.execute(copy);
+
+		//		b.recycle(); // Free up the memory as soon as possible
+		Log.d(TAG, "OnCameraStartComplete");
+	}
+
+	private static void logImg(String prefix, Mat img){
+		if (img == null) return;
+
+		if (img.type() == CvType.CV_8UC4)
+			Log.d(TAG, prefix + " w:" + img.width() + " h:" + img.height() + "Image type 8UC4");
+		else if (img.type() == CvType.CV_8UC3)
+			Log.d(TAG, prefix + " w:" + img.width() + " h:" + img.height() + "Image type 8UC3");
+		else if (img.type() == CvType.CV_8UC1)
+			Log.d(TAG, prefix + " w:" + img.width() + " h:" + img.height() + "Image type 8UC1");
+		else
+			Log.d(TAG, prefix + " w:" + img.width() + " h:" + img.height() + "Image type unknown");
 	}
 
 	/**
@@ -301,16 +432,23 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 	 */
 	private ImageInformation mRefImgInfo = null; 
 
+	private static final boolean DEBUG = false;
+
 	@Override
 	public Mat onCameraFrame(Mat inputFrame) {
+		logImg("Input frame", inputFrame);
+		if (DEBUG)
+			return mRgba;
+
+		if (mCurrentAppliance == null || mRgba == null) {
+			//			return inputFrame;
+			return mRgba;
+		}
+
 		// Set this image as new Other image
-		Log.d(TAG, "Mat input width: " + inputFrame.cols() + " height:" + inputFrame.rows());
-
-		// Transfer the data to mRgba for general display
-		inputFrame.copyTo(mRgba);
-
 		Mat workImage = new Mat();
-		mRgba.copyTo(workImage);
+		inputFrame.copyTo(workImage);
+		logImg("Input working copy", workImage);
 
 		if (mRefImgInfo != null){ // The reference image features are finished being computed
 			switch (mCurrentOption){
@@ -341,10 +479,8 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 				return mRgba;
 			}
 		}
-
-		// 
 		if (mResult != null) {
-			Log.d(TAG, "Calculated result input width: " + mResult.cols() + " height:" + mResult.rows());
+			logImg("Input result", mResult);
 			return mResult;
 		} else 
 			return mRgba;
@@ -490,8 +626,6 @@ OnFeaturesDrawnListener, ImageWarpListener, OnItemSelectedListener {
 				}
 				s.setOnItemSelectedListener(this);
 	}
-
-	private static boolean DEBUG = false;
 
 	/*
 	 * DEBUG: The following 

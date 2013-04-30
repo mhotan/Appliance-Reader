@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 
@@ -111,10 +112,10 @@ public abstract class ApplianceFeatures implements Iterable<ApplianceFeature> {
 	 * Scales down all the features
 	 * @param scaleFactor int factor to scale points down by
 	 */
-	public void scaleDownFeatures(float scaleFactor) {
+	public void scaleFeatures(float scaleFactor) {
 		Collection<ApplianceFeature> AppFeatures = mFeatures.values();
 		for (ApplianceFeature a: AppFeatures)
-			a.scaleFeature(1.0 / scaleFactor); // Scale down
+			a.scaleFeature(scaleFactor); // Scale down
 	}
 	
 	/**
@@ -174,5 +175,11 @@ public abstract class ApplianceFeatures implements Iterable<ApplianceFeature> {
 			apps.add(mFeatures.get(s));
 		}
 		return apps;
+	}
+
+	public void rotateAround(Mat rotMat2by3) {
+		Collection<ApplianceFeature> AppFeatures = mFeatures.values();
+		for (ApplianceFeature a: AppFeatures)
+			a.rotate(rotMat2by3); // Scale down
 	}
 }

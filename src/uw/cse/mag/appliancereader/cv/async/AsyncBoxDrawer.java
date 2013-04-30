@@ -107,7 +107,7 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 			throw new RuntimeException("Illegal Computer Vision: " + cv);
 		if (refImg == null)
 			throw new RuntimeException("Reference image cannot be null");
-		
+
 		// Initialize the computer vision tools
 		mCV = cv;
 		mFeatureDetector = CVSingletons.getFeatureDetector();
@@ -117,10 +117,10 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 		mRefImg = refImg.mImage;
 		mRefKeyPts = refImg.mFeatureKeyPts;
 		mRefDescriptors = refImg.mFeatureDescriptors;
-	
+
 		// Assign the feature to draw
 		mFeaturesToDraw = feats;
-		
+
 		// Create a list of listeners
 		mSecListeners = new ArrayList<AsyncBoxDrawer.WarpedPointListener>();
 	}
@@ -133,7 +133,7 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 		if (l != null)
 			mSecListeners.add(l);
 	}
-	
+
 	/**
 	 * Removes listener if it exists
 	 * @param l
@@ -141,6 +141,8 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 	public void removeListener(WarpedPointListener l){
 		mSecListeners.remove(l);
 	}
+
+	private static final boolean SWAP = true;
 
 	@Override
 	protected Mat doInBackground(Mat... params) {
@@ -160,38 +162,58 @@ public final class AsyncBoxDrawer extends AsyncTask<Mat, Void, Mat> {
 			return null;
 		}
 
-		// Get putative matches
-		mMatDMatches = mCV.getMatchingCorrespondences(mTgtDescriptors, mRefDescriptors);
+		Mat warped;
+		if (SWAP){
+			mMatDMatches = mCV.getMatchingCorrespondences(mRefDescriptors, mTgtDescriptors);
 
-		// Get points for homography calculation
-		MatOfPoint2f[] pts = mCV.getCorrespondences(mMatDMatches, mRefKeyPts, mTgtKeyPts);
+			// Get points for homography calculation
+			MatOfPoint2f[] pts = mCV.getCorrespondences(mMatDMatches, mTgtKeyPts, mRefKeyPts);
 
-		MatOfPoint2f tgt2f = pts[1];
-		MatOfPoint2f ref2f = pts[0];
+			MatOfPoint2f tgt2f = pts[1];
+			MatOfPoint2f ref2f = pts[0];
 
-		// Find the transformation form reference to tgt
-		mHomography = mCV.findHomography( ref2f, tgt2f, 
-				CVSingletons.getHomographyMethod(), CVSingletons.getRansacThreshold());
+			// Find the transformation form reference to tgt
+			mHomography = mCV.findHomography( ref2f, tgt2f, 
+					CVSingletons.getHomographyMethod(), CVSingletons.getRansacThreshold());
 
-		// Transform the Target image to resemble the reference image 
-		// This might not be perfect or even close
-		// TODO Check if transformation is correct
-		Mat warped = mCV.getWarpedImage(mTgtImg, mHomography, 
-				new Size(mTgtImg.width(), mTgtImg.height()), false);
-		
+			// Transform the Target image to resemble the reference image 
+			// This might not be perfect or even close
+			// TODO Check if transformation is correct
+			warped = mCV.getWarpedImage(mTgtImg, mHomography, 
+					mTgtImg.size(), false);
+		}else {
+			// Get putative matches
+			mMatDMatches = mCV.getMatchingCorrespondences(mTgtDescriptors, mRefDescriptors);
+
+			// Get points for homography calculation
+			MatOfPoint2f[] pts = mCV.getCorrespondences(mMatDMatches, mRefKeyPts, mTgtKeyPts);
+
+			MatOfPoint2f tgt2f = pts[1];
+			MatOfPoint2f ref2f = pts[0];
+
+			// Find the transformation form reference to tgt
+			mHomography = mCV.findHomography( ref2f, tgt2f, 
+					CVSingletons.getHomographyMethod(), CVSingletons.getRansacThreshold());
+
+			// Transform the Target image to resemble the reference image 
+			// This might not be perfect or even close
+			// TODO Check if transformation is correct
+			warped = mCV.getWarpedImage(mTgtImg, mHomography, 
+					new Size(mTgtImg.width(), mTgtImg.height()), false);
+		}
 		// Iterate through every ApplianceFeature
 		for (Rect r: mFeaturesToDraw.getFeatureBoxes()){
 			mCV.drawRect(r, warped);
 		}
-		
+
 		return warped;
 	}
-	
+
 	@Override
 	protected void onPostExecute(Mat completeImage){
 		if (completeImage != null)
-		for (WarpedPointListener l: mSecListeners)
-			l.onBoxDrawn(completeImage);
+			for (WarpedPointListener l: mSecListeners)
+				l.onBoxDrawn(completeImage);
 	}
 
 	public interface WarpedPointListener {

@@ -70,6 +70,9 @@ public class UserApplianceDataSource {
 		cursor.moveToFirst();
 		Appliance newappliance = cursorToAppliance(cursor);
 		cursor.close();
+		
+		// Download the Appliance features again
+		newappliance.setApplianceFeatures(filemanager.getFeatures(newappliance));
 		return newappliance;
 	}
 
