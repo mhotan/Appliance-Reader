@@ -3,6 +3,8 @@
 	<classpathentry excluding="uw/cse/mag/appliancereader/dataset/DisplayFeature.java|uw/cse/mag/appliancereader/dataset/TestFeature.java|uw/cse/mag/appliancereader/datatype/XMLTestImageSet.java|uw/cse/mag/appliancereader/datatype/TestFeature.java|uw/cse/mag/appliancereader/db/DefaultApplianceSQLiteHelper.java|uw/cse/mag/appliancereader/db/UserAppliancesSQLiteHelper.java|uw/cse/mag/appliancereader/db/UserApplianceAdapter.java|uw/cse/mag/appliancereader/db/ApplianceDBAdapter.java|uw/cse/mag/appliancereader/db/ApplianceDataSource.java|uw/cse/mag/appliancereader/db/datatype/TestFeature.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/OpenCV Library - 2.4.6"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
